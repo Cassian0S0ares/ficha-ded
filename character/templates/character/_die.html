@@ -1,0 +1,21 @@
+<svg class="die-icon" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+    {% if die == 'd4' %}
+    <path d="M16 3 29 27H3Z"/>
+    <path class="die-facets" d="M16 3v17L3 27m13-7 13 7"/>
+    {% elif die == 'd6' %}
+    <path d="m16 2 13 7v15l-13 7-13-7V9Z"/>
+    <path class="die-facets" d="m3 9 13 7 13-7M16 16v15"/>
+    {% elif die == 'd8' %}
+    <path d="m16 2 13 14-13 14L3 16Z"/>
+    <path class="die-facets" d="m3 16 13 5 13-5M16 2v19m0 0v9"/>
+    {% elif die == 'd10' %}
+    <path d="m16 2 13 17-5 7-8 4-8-4-5-7Z"/>
+    <path class="die-facets" d="m16 2-8 19 8 9 8-9-8-19M3 19l5 2 8-4 8 4 5-2M16 17v13"/>
+    {% elif die == 'd12' %}
+    <path d="m16 2 9 3 5 8-1 10-8 7H11l-8-7-1-10 5-8Z"/>
+    <path class="die-facets" d="m16 9 8 6-3 9H11l-3-9ZM16 2v7m9-4-1 10m6-2-6 2m5 8-8 1m0 6v-6m-10 6v-6m-8-1 8 1m-9-11 6 2M7 5l1 10"/>
+    {% elif die == 'd20' %}
+    <path d="m16 2 13 7v14l-13 7-13-7V9Z"/>
+    <path class="die-facets" d="m16 2-7 20h14L16 2M3 9l6 13-6 1m26-14-6 13 6 1M3 9l13 4 13-4M16 13 9 22l7 8 7-8-7-9"/>
+    {% endif %}
+</svg>

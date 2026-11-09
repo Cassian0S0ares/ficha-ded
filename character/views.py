@@ -42,6 +42,8 @@ def dashboard(request):
 
     context = {
         'character': character,
+        'class_label': {'Cleric': 'Clérigo'}.get(character.class_name, character.class_name),
+        'subclass_label': {'Peace Domain': 'Domínio da Paz'}.get(character.subclass, character.subclass),
         'abilities': abilities,
         'spell_slots': character.spell_slots.all(),
         'cantrips': [s for s in spells if s.spell_level == 0],

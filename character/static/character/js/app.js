@@ -137,7 +137,7 @@
             void box.offsetWidth; // reinicia a animação
             box.classList.add('pop');
         }
-        toast('🎲 ' + roll.label + ' → ' + roll.total);
+        toast(roll.label + ' → ' + roll.total);
     }
 
     // -------------------------------------------------------- Dispatcher
@@ -236,7 +236,7 @@
                 img.hidden = false;
             }
             if (placeholder) placeholder.hidden = true;
-            toast('📷 Foto atualizada.');
+            toast('Foto atualizada.');
         }).catch((err) => {
             toast(err.message, true);
         }).finally(() => {

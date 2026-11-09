@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Vale montanhoso ao amanhecer, com um caminho entre as colinas">
+  <defs>
+    <linearGradient id="sky" x2="0" y2="1">
+      <stop offset="0" stop-color="#142d38"/>
+      <stop offset=".42" stop-color="#426779"/>
+      <stop offset=".75" stop-color="#ad9e83"/>
+      <stop offset="1" stop-color="#d7b481"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#ffedbd" stop-opacity=".7"/>
+      <stop offset=".45" stop-color="#f4d59d" stop-opacity=".18"/>
+      <stop offset="1" stop-color="#f4d59d" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mist" x2="0" y2="1">
+      <stop offset="0" stop-color="#d7d2bd" stop-opacity=".05"/>
+      <stop offset="1" stop-color="#e1d9c1" stop-opacity=".62"/>
+    </linearGradient>
+    <linearGradient id="near" x2="0" y2="1">
+      <stop offset="0" stop-color="#325e58"/>
+      <stop offset="1" stop-color="#132f32"/>
+    </linearGradient>
+    <linearGradient id="path" x2="0" y2="1">
+      <stop offset="0" stop-color="#dbc6a0" stop-opacity=".56"/>
+      <stop offset="1" stop-color="#d9b482" stop-opacity=".9"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="18"/></filter>
+  </defs>
+
+  <path fill="url(#sky)" d="M0 0h1600v900H0z"/>
+  <ellipse cx="1160" cy="270" rx="330" ry="330" fill="url(#glow)"/>
+  <circle cx="1160" cy="280" r="85" fill="#f7dfab" opacity=".85"/>
+  <circle cx="1160" cy="280" r="105" fill="none" stroke="#f7dfab" stroke-opacity=".2" stroke-width="1.5"/>
+
+  <!-- Cordilheiras distantes, cada uma mais nítida em direção ao observador. -->
+  <path fill="#81979a" opacity=".46" d="M0 462 130 368 208 406 344 270 472 395 552 338 698 465 797 370 886 436 1022 307 1135 425 1247 354 1372 453 1491 329 1600 438v462H0z"/>
+  <path fill="#607f84" opacity=".67" d="m0 548 145-120 111 72 158-151 104 114 142-61 164 140 116-108 90 56 145-160 149 142 119-55 157 140v343H0z"/>
+  <path fill="url(#mist)" d="M0 449h1600v270H0z"/>
+  <path fill="#4d7572" opacity=".82" d="m0 606 149-94 101 63 175-92 159 116 165-77 144 83 158-106 119 93 146-105 184 115v298H0z"/>
+  <path fill="#96a99d" opacity=".18" filter="url(#blur)" d="M0 610q390-80 800 2t800-32v100q-490 10-800 44T0 692z"/>
+
+  <!-- Vale e trilha serpenteando até o horizonte. -->
+  <path fill="#3f6a61" d="M0 735q218-111 433-79 143 19 250 95 167 105 316 38 117-53 246-126 173-90 355 45v192H0z"/>
+  <path fill="url(#path)" d="M869 635q-93 21-72 54 13 23 116 18 140-7 182 31 46 42-122 75-165 34-211 87h284q54-26 161-48 183-38 183-100 0-53-129-80-99-21-227-8-97 10-132-7-20-10-33-22z"/>
+  <path fill="#31584f" d="M0 818q167-102 329-90 134 10 253 67 115 55 221 29 74-18 150-48-61 48-95 124H0z"/>
+  <path fill="url(#near)" d="M1600 698q-176-89-349-24-124 47-195 120 159-46 269 6 102 48 275 28v72H0v-62q118-13 227-81 126-79 277-53 103 17 186 71-83-18-158 9-98 37-140 116h1208z"/>
+
+  <!-- Árvores em silhueta e alguns pontos de luz da jornada. -->
+  <g fill="#173a37" opacity=".82">
+    <path d="m37 817 31-99 31 99h-16l22 83H30l22-83zm84 5 24-73 24 73h-13l16 78h-54l15-78zm134 9 31-88 31 88h-16l18 69h-67l18-69zm129 10 25-67 26 67h-13l16 59h-58l17-59z"/>
+    <path d="m1436 817 38-119 39 119h-18l24 83h-90l24-83zm-98 15 31-92 31 92h-15l19 68h-69l19-68zm185-13 23-72 24 72h-12l17 81h-56l16-81z"/>
+  </g>
+  <g fill="#eac685" opacity=".75">
+    <circle cx="496" cy="748" r="2.2"/><circle cx="542" cy="768" r="1.5"/>
+    <circle cx="1261" cy="681" r="1.8"/><circle cx="1305" cy="693" r="1.4"/>
+  </g>
+</svg>

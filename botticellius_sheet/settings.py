@@ -14,6 +14,15 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Carrega variáveis do arquivo .env (se existir) sem sobrescrever o ambiente.
+_env_file = BASE_DIR / '.env'
+if _env_file.exists():
+    for _line in _env_file.read_text().splitlines():
+        _line = _line.strip()
+        if _line and not _line.startswith('#') and '=' in _line:
+            _k, _v = _line.split('=', 1)
+            os.environ.setdefault(_k.strip(), _v.strip())
+
 
 def env_bool(name, default=False):
     """Lê uma variável de ambiente booleana de forma tolerante."""
@@ -90,6 +99,7 @@ if env_bool('USE_POSTGRES', False):
             'PASSWORD': os.environ.get('DB_PASSWORD', 'botticellius'),
             'HOST': os.environ.get('DB_HOST', 'localhost'),
             'PORT': os.environ.get('DB_PORT', '5432'),
+            'OPTIONS': {'sslmode': os.environ.get('DB_SSLMODE', 'require')},
         }
     }
 else:
@@ -144,3 +154,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Arquivos enviados (foto do personagem): Supabase Storage se configurado.
+SUPABASE_URL = os.environ.get('SUPABASE_URL', '')
+SUPABASE_SECRET_KEY = os.environ.get('SUPABASE_SECRET_KEY', '')
+SUPABASE_BUCKET = os.environ.get('SUPABASE_BUCKET', 'avatars')
+
+if SUPABASE_URL and SUPABASE_SECRET_KEY:
+    STORAGES = {
+        'default': {'BACKEND': 'character.storage.SupabaseStorage'},
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage'},
+    }

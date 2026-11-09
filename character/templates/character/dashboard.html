@@ -18,18 +18,23 @@
             {% else %}
             <img id="avatar-img" class="avatar-img" src="" alt="Foto de {{ character.name }}" hidden>
             {% endif %}
-            <span id="avatar-placeholder" class="avatar-placeholder"{% if character.avatar %} hidden{% endif %}>🐢</span>
-            <span class="avatar-hint">📷</span>
+            <span id="avatar-placeholder" class="avatar-placeholder"{% if character.avatar %} hidden{% endif %}>{% include 'character/_icon.html' with icon='person' %}</span>
+            <span class="avatar-hint">{% include 'character/_icon.html' with icon='camera' %}</span>
             <input type="file" id="avatar-input" accept="image/*" hidden>
         </label>
-        <div>
+        <div class="hero-copy">
+            <p class="char-kicker">Diário de jornada <span class="kicker-divider" aria-hidden="true"></span> Eremita errante</p>
             <h1 class="char-name">{{ character.name }}</h1>
-            <p class="char-sub">{{ character.race }} · {{ character.class_name }} · {{ character.subclass }} · Nível {{ character.level }}</p>
+            <p class="char-sub">{{ character.race }} · {{ class_label }} · {{ subclass_label }} · Nível {{ character.level }}</p>
+            <p class="char-story">Seu povo percorre o mundo para amparar quem precisa. A cada encontro, um passo na busca pelo nirvana.</p>
+            <div class="hero-signposts" aria-label="Caminho do personagem">
+                <span>O caminho</span><span aria-hidden="true">·</span><span>Compaixão</span><span aria-hidden="true">·</span><span>Paz interior</span>
+            </div>
         </div>
     </div>
     <div class="topbar-actions">
-        <button class="btn btn-rest" data-action="short-rest" data-url="{% url 'short_rest' %}">🔥 Descanso Curto</button>
-        <button class="btn btn-rest btn-long" data-action="long-rest" data-url="{% url 'long_rest' %}">🌙 Descanso Longo</button>
+        <button class="btn btn-rest" data-action="short-rest" data-url="{% url 'short_rest' %}">{% include 'character/_icon.html' with icon='sun' %} Descanso Curto</button>
+        <button class="btn btn-rest btn-long" data-action="long-rest" data-url="{% url 'long_rest' %}">{% include 'character/_icon.html' with icon='moon' %} Descanso Longo</button>
     </div>
 </header>
 
@@ -57,14 +62,18 @@
     <section class="card card-ac">
         <h2 class="card-title">Defesa</h2>
         <div class="ac-shield">
+            <svg class="ac-shield-shape" viewBox="0 0 108 120" aria-hidden="true" focusable="false">
+                <path class="ac-shield-body" d="M14 8h80a4 4 0 0 1 4 4v38c0 28-19 48-44 63C29 98 10 78 10 50V12a4 4 0 0 1 4-4Z"/>
+                <path class="ac-shield-rim" d="M18 16h72v34c0 23-15 40-36 54-21-14-36-31-36-54Z"/>
+            </svg>
             <span id="ac-value">{{ character.effective_ac }}</span>
-            <small>Classe de Armadura</small>
         </div>
+        <p class="ac-label">Classe de Armadura</p>
         <p class="ac-detail">Base <strong>{{ character.armor_class }}</strong> · Armadura Natural (Tortle)</p>
         <button class="btn btn-toggle {% if character.shell_defense_active %}is-active{% endif %}"
                 id="shell-btn"
                 data-action="shell-defense" data-url="{% url 'toggle_shell_defense' %}">
-            🛡️ Defesa de Concha <span id="shell-state">{% if character.shell_defense_active %}(ATIVA +4){% else %}(inativa){% endif %}</span>
+            {% include 'character/_icon.html' with icon='shield' %} Defesa de Concha <span id="shell-state">{% if character.shell_defense_active %}(ATIVA +4){% else %}(inativa){% endif %}</span>
         </button>
     </section>
 
@@ -170,11 +179,87 @@
                 <h3>Domínio da Paz</h3>
                 <ul>
                     <li><strong>Implemento da Paz:</strong> proficiência em Persuasão.</li>
-                    <li><strong>Vínculo Encorajador:</strong> até 5 criaturas, alcance 9m, 10 min. +1d4 em ataques, testes e salvaguardas (1×/turno; requer outra criatura vinculada a até 9m).</li>
+                    <li><strong>Vínculo Encorajador:</strong> até 3 criaturas no nível 8, alcance 9m, 10 min. +1d4 em ataques, testes e salvaguardas (1×/turno; requer outra criatura vinculada a até 9m).</li>
                     <li><strong>Bálsamo da Paz:</strong> consome Canalizar Divindade; cura 2d6 + 5 a cada criatura tocada (uma vez por uso).</li>
                     <li><strong>Vínculo Protetor:</strong> reação; teleporta até 9m para até 1,5m de um aliado vinculado e recebe o dano no lugar dele.</li>
                 </ul>
             </div>
+        </div>
+    </section>
+
+    <!-- ===================== DICAS E COMBOS ===================== -->
+    <section class="card card-tips">
+        <h2 class="card-title">Dicas e Combos</h2>
+        <div class="tips">
+            <article class="tip">
+                <h3>Vínculo Encorajador + Abençoar: mais acerto para o grupo</h3>
+                <p class="tip-tag">Preparação · 1º círculo · Concentração em Abençoar</p>
+                <ol>
+                    <li>Use <strong>Vínculo Encorajador</strong> em até <strong>3 criaturas</strong> no nível 8 (você pode ser uma delas). Ele dura 10 minutos e não exige concentração.</li>
+                    <li>Conjure <strong>Abençoar</strong> nos aliados que vão atacar. Com espaço de 1º círculo, afeta até 3 criaturas; com espaço de 3º, até 5.</li>
+                    <li>Quem estiver sob os dois efeitos soma <strong>1d4 do Vínculo + 1d4 de Abençoar</strong> à jogada de ataque: <strong>+2 a +8</strong>, média <strong>+5</strong>.</li>
+                </ol>
+                <p class="tip-note">Não é +4 fixo. Cada criatura usa o d4 do Vínculo uma vez por turno e precisa estar a até 9m de outra criatura vinculada. Abençoar dura até 1 minuto e exige concentração.</p>
+            </article>
+            <article class="tip">
+                <h3>Combo da Paz: Corrida de Cura</h3>
+                <p class="tip-tag">Canalizar Divindade · Ação</p>
+                <ol>
+                    <li>Use <strong>Bálsamo da Paz</strong> (gasta 1 Canalizar Divindade).</li>
+                    <li>Mova-se até seu deslocamento <em>sem provocar ataques de oportunidade</em>.</li>
+                    <li>Ao passar a até 1,5m de cada aliado, ele recebe <strong>2d6+5</strong> de cura (uma vez por criatura).</li>
+                </ol>
+                <p class="tip-note">Ótimo para curar o grupo todo e sair do corpo a corpo no mesmo turno.</p>
+            </article>
+            <article class="tip">
+                <h3>Vínculo Encorajador + Vínculo Protetor</h3>
+                <p class="tip-tag">Domínio da Paz · Reação</p>
+                <ol>
+                    <li>Ligue até 3 criaturas com o <strong>Vínculo Encorajador</strong> (+1d4 em ataques, testes e salvaguardas, 10 min).</li>
+                    <li>Quando um aliado vinculado for atingido, use a reação do <strong>Vínculo Protetor</strong>: teleporta até 9m e <strong>recebe o dano no lugar dele</strong>.</li>
+                    <li>Com a <strong>Defesa de Concha</strong> e CA alta, você aguenta o dano melhor que qualquer um.</li>
+                </ol>
+                <p class="tip-note">O Vínculo Encorajador não exige concentração: combina com qualquer magia de concentração.</p>
+            </article>
+            <article class="tip">
+                <h3>Guardiões Espirituais + Vínculo</h3>
+                <p class="tip-tag">Controle de campo · Concentração</p>
+                <ol>
+                    <li>Abra com <strong>Guardiões Espirituais</strong> (3º círculo) e deixe os inimigos entrarem nos 4,5m.</li>
+                    <li>Aplique o <strong>Vínculo Encorajador</strong> nos aliados; ele não disputa concentração.</li>
+                    <li>Se levar dano, <strong>Defesa de Concha</strong> dá vantagem em salvaguardas de Con. para manter a concentração.</li>
+                </ol>
+                <p class="tip-note">Atenção: na concha você não pode agir além de sair dela.</p>
+            </article>
+            <article class="tip">
+                <h3>Farol da Esperança + Cura</h3>
+                <p class="tip-tag">Concentração · 4º círculo</p>
+                <ol>
+                    <li>Lance <strong>Farol da Esperança</strong> sobre o grupo: vantagem em Sab. e salvaguardas contra a morte.</li>
+                    <li>Toda cura recebida vira <strong>valor máximo</strong>.</li>
+                    <li>Use <strong>Curar Ferimentos</strong> (1d8+5 = 13) ou o <strong>Bálsamo</strong> (2d6+5 = 17) em aliados caídos.</li>
+                </ol>
+                <p class="tip-note">Ideal para a rodada em que o grupo está quase todo a 0 PV.</p>
+            </article>
+            <article class="tip">
+                <h3>Flecha Guia + Aliados</h3>
+                <p class="tip-tag">Ação · 1º círculo</p>
+                <ol>
+                    <li>Acerte o alvo com <strong>Flecha Guia</strong> (4d6 radiante).</li>
+                    <li>O próximo ataque contra ele tem <strong>vantagem</strong>: avise o aliado com mais dano.</li>
+                    <li>Se o aliado estiver vinculado, ele soma o <strong>+1d4</strong> do Vínculo no ataque.</li>
+                </ol>
+            </article>
+            <article class="tip">
+                <h3>Proteção em camadas</h3>
+                <p class="tip-tag">Preparação antes da luta</p>
+                <ol>
+                    <li><strong>Escudo da Fé</strong> (+2 CA) ou <strong>Abençoar</strong>: escolha só um, ambos usam concentração.</li>
+                    <li><strong>Santuário</strong> no aliado frágil enquanto você cura.</li>
+                    <li><strong>Proteção contra a Morte</strong> no aliado da linha de frente, antes do combate.</li>
+                </ol>
+                <p class="tip-note">Lembrete: só uma magia de concentração por vez. Acompanhe no card Concentração.</p>
+            </article>
         </div>
     </section>
 
@@ -202,12 +287,12 @@
     <section class="card card-dice">
         <h2 class="card-title">Rolagem de Dados</h2>
         <div class="dice-row">
-            <button class="btn btn-dice" data-action="roll-dice" data-dice="d4">d4</button>
-            <button class="btn btn-dice" data-action="roll-dice" data-dice="d6">d6</button>
-            <button class="btn btn-dice" data-action="roll-dice" data-dice="d8">d8</button>
-            <button class="btn btn-dice" data-action="roll-dice" data-dice="d10">d10</button>
-            <button class="btn btn-dice" data-action="roll-dice" data-dice="d12">d12</button>
-            <button class="btn btn-dice" data-action="roll-dice" data-dice="d20">d20</button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d4" aria-label="Rolar dado de 4 faces" title="Rolar d4">{% include 'character/_die.html' with die='d4' %}<span>d4</span></button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d6" aria-label="Rolar dado de 6 faces" title="Rolar d6">{% include 'character/_die.html' with die='d6' %}<span>d6</span></button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d8" aria-label="Rolar dado de 8 faces" title="Rolar d8">{% include 'character/_die.html' with die='d8' %}<span>d8</span></button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d10" aria-label="Rolar dado de 10 faces" title="Rolar d10">{% include 'character/_die.html' with die='d10' %}<span>d10</span></button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d12" aria-label="Rolar dado de 12 faces" title="Rolar d12">{% include 'character/_die.html' with die='d12' %}<span>d12</span></button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d20" aria-label="Rolar dado de 20 faces" title="Rolar d20">{% include 'character/_die.html' with die='d20' %}<span>d20</span></button>
         </div>
 
         <h3 class="spell-group-title">Calculadora de Cura e Dano</h3>
