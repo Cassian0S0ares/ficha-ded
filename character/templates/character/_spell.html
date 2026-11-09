@@ -1,0 +1,19 @@
+{# Card de uma magia. Espera a variável `spell` no contexto. #}
+<div class="spell {% if spell.requires_concentration %}spell-conc{% endif %} {% if spell.is_domain_spell %}spell-domain{% endif %}">
+    <div class="spell-main">
+        <div class="spell-head">
+            <span class="spell-name">{{ spell.name }}</span>
+            <span class="spell-badges">
+                {% if spell.is_cantrip %}<span class="badge badge-cantrip">Truque</span>{% else %}<span class="badge">{{ spell.spell_level }}º</span>{% endif %}
+                {% if spell.requires_concentration %}<span class="badge badge-conc" title="Requer concentração">C</span>{% endif %}
+                {% if spell.is_domain_spell %}<span class="badge badge-domain" title="Magia de domínio">D</span>{% endif %}
+            </span>
+        </div>
+        <p class="spell-desc">{{ spell.description }}</p>
+        <div class="spell-rolls">
+            {% if spell.healing_formula %}<button class="btn btn-xs btn-heal" data-action="roll-formula" data-formula="{{ spell.healing_formula }}" data-label="{{ spell.name }} (cura)">Cura {{ spell.healing_formula }}</button>{% endif %}
+            {% if spell.damage_formula %}<button class="btn btn-xs btn-damage" data-action="roll-formula" data-formula="{{ spell.damage_formula }}" data-label="{{ spell.name }} (dano)">Dano {{ spell.damage_formula }}</button>{% endif %}
+        </div>
+    </div>
+    <button class="btn btn-cast" data-action="cast" data-url="{% url 'cast_spell' spell.id %}">Conjurar</button>
+</div>

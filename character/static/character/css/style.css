@@ -1,0 +1,343 @@
+/* ==========================================================================
+   Ficha de Botticellius — tema fantasia medieval (pergaminho + grimório)
+   ========================================================================== */
+
+:root {
+    --parchment: #ece0c8;
+    --parchment-dark: #dcc9a3;
+    --ink: #2b2118;
+    --ink-soft: #5c4a35;
+    --gold: #b8893b;
+    --gold-light: #e0b75e;
+    --leather: #3a2418;
+    --leather-dark: #241309;
+    --blood: #8a2222;
+    --blood-light: #b53636;
+    --heal: #2f7d4f;
+    --heal-light: #44a36a;
+    --royal: #3b2a63;
+    --royal-light: #6a4fa0;
+    --shadow: rgba(0, 0, 0, 0.35);
+    --radius: 12px;
+    --font-display: 'Cinzel', serif;
+    --font-body: 'EB Garamond', Georgia, serif;
+}
+
+* { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+    margin: 0;
+    font-family: var(--font-body);
+    color: var(--ink);
+    background:
+        radial-gradient(circle at 20% 10%, rgba(184, 137, 59, 0.12), transparent 40%),
+        radial-gradient(circle at 80% 90%, rgba(59, 42, 99, 0.12), transparent 40%),
+        linear-gradient(135deg, #1c1209, #2b1c10 60%, #1a1108);
+    min-height: 100vh;
+    font-size: 17px;
+    line-height: 1.5;
+}
+
+h1, h2, h3 { font-family: var(--font-display); margin: 0; }
+
+a { color: var(--gold-light); }
+
+/* ----------------------------------------------------- Botões genéricos --- */
+.btn {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    color: var(--parchment);
+    background: linear-gradient(180deg, var(--leather), var(--leather-dark));
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    padding: 0.55em 1em;
+    cursor: pointer;
+    transition: transform 0.12s ease, box-shadow 0.2s ease, filter 0.2s ease;
+    box-shadow: 0 2px 6px var(--shadow);
+}
+.btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.btn:active { transform: translateY(1px); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-block { display: block; width: 100%; }
+.btn-sm { padding: 0.4em 0.7em; font-size: 0.75rem; }
+.btn-xs { padding: 0.25em 0.55em; font-size: 0.68rem; }
+
+.btn-primary { background: linear-gradient(180deg, var(--gold-light), var(--gold)); color: var(--leather-dark); }
+.btn-ghost { background: transparent; color: var(--gold-light); }
+.btn-damage { background: linear-gradient(180deg, var(--blood-light), var(--blood)); border-color: var(--blood-light); }
+.btn-heal { background: linear-gradient(180deg, var(--heal-light), var(--heal)); border-color: var(--heal-light); }
+.btn-cast { background: linear-gradient(180deg, var(--royal-light), var(--royal)); border-color: var(--royal-light); align-self: center; white-space: nowrap; }
+.btn-dice {
+    width: 56px; height: 56px; border-radius: 50%;
+    font-size: 0.95rem; display: inline-flex; align-items: center; justify-content: center;
+}
+.btn-toggle.is-active { background: linear-gradient(180deg, var(--royal-light), var(--royal)); box-shadow: 0 0 12px var(--royal-light); }
+.btn-rest { background: linear-gradient(180deg, #6b4a22, #3a2614); }
+.btn-long { background: linear-gradient(180deg, var(--royal-light), var(--royal)); }
+
+/* ===================================================== Páginas de auth === */
+.auth-page { display: flex; align-items: center; justify-content: center; padding: 24px; }
+.auth-card {
+    width: 100%; max-width: 380px;
+    background: linear-gradient(180deg, var(--parchment), var(--parchment-dark));
+    border: 2px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 36px 32px;
+    box-shadow: 0 12px 40px var(--shadow), inset 0 0 60px rgba(184, 137, 59, 0.15);
+    text-align: center;
+}
+.auth-emblem { font-size: 3rem; color: var(--gold); }
+.auth-title { font-size: 2rem; color: var(--leather-dark); letter-spacing: 0.05em; }
+.auth-subtitle { color: var(--ink-soft); margin: 4px 0 24px; font-style: italic; }
+.auth-form { text-align: left; display: flex; flex-direction: column; gap: 6px; }
+.auth-form label { font-family: var(--font-display); font-size: 0.8rem; color: var(--ink-soft); margin-top: 8px; }
+.auth-form input {
+    padding: 0.6em 0.8em; border: 1px solid var(--gold);
+    border-radius: 8px; background: rgba(255, 255, 255, 0.5);
+    font-family: var(--font-body); font-size: 1rem; color: var(--ink);
+}
+.auth-form .btn { margin-top: 18px; }
+.auth-error { color: var(--blood); font-weight: 600; }
+.field-error { color: var(--blood); font-size: 0.8rem; }
+.field-help { color: var(--ink-soft); font-size: 0.72rem; }
+.auth-foot { margin-top: 18px; color: var(--ink-soft); font-size: 0.9rem; }
+
+/* ===================================================== Dashboard ======== */
+.topbar {
+    display: flex; flex-wrap: wrap; gap: 16px;
+    align-items: center; justify-content: space-between;
+    padding: 18px 28px;
+    background: linear-gradient(180deg, var(--leather), var(--leather-dark));
+    border-bottom: 3px solid var(--gold);
+    box-shadow: 0 4px 14px var(--shadow);
+}
+.topbar-identity { display: flex; align-items: center; gap: 16px; }
+.crest {
+    position: relative; overflow: hidden; cursor: pointer;
+    font-size: 2.4rem; width: 64px; height: 64px;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(circle, var(--gold-light), var(--gold));
+    border-radius: 50%; border: 2px solid var(--parchment);
+    box-shadow: 0 0 16px rgba(224, 183, 94, 0.5);
+}
+.crest .avatar-img {
+    width: 100%; height: 100%;
+    object-fit: cover; border-radius: 50%;
+}
+.crest .avatar-hint {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; background: rgba(0, 0, 0, 0.45);
+    opacity: 0; transition: opacity 0.15s ease;
+}
+.crest:hover .avatar-hint { opacity: 1; }
+.char-name { color: var(--gold-light); font-size: 1.8rem; letter-spacing: 0.04em; }
+.char-sub { color: var(--parchment-dark); margin: 2px 0 0; font-style: italic; font-size: 0.95rem; }
+.topbar-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.logout-form { margin: 0; }
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 20px;
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.card {
+    background: linear-gradient(180deg, var(--parchment), var(--parchment-dark));
+    border: 1px solid var(--gold);
+    border-radius: var(--radius);
+    padding: 20px;
+    box-shadow: 0 8px 24px var(--shadow), inset 0 0 40px rgba(184, 137, 59, 0.08);
+    position: relative;
+    animation: rise 0.4s ease both;
+}
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+
+.card-title {
+    font-size: 1.1rem; color: var(--leather-dark);
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 8px; margin-bottom: 14px;
+    letter-spacing: 0.05em; text-transform: uppercase;
+}
+
+/* Posicionamento dos cards no grid */
+.card-hp        { grid-column: span 4; }
+.card-ac        { grid-column: span 4; }
+.card-conc      { grid-column: span 4; }
+.card-abilities { grid-column: span 6; }
+.card-slots     { grid-column: span 6; }
+.card-resources { grid-column: span 6; }
+.card-features  { grid-column: span 6; }
+.card-spells    { grid-column: span 8; }
+.card-dice      { grid-column: span 4; }
+.card-log       { grid-column: span 12; }
+
+/* ----------------------------------------------------------------- HP --- */
+.hp-readout { font-family: var(--font-display); font-size: 2.6rem; text-align: center; color: var(--blood); }
+.hp-sep { color: var(--ink-soft); margin: 0 6px; }
+.hp-bar {
+    height: 22px; background: rgba(0, 0, 0, 0.25);
+    border-radius: 12px; overflow: hidden; margin: 12px 0;
+    border: 1px solid var(--leather);
+}
+.hp-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--blood), var(--blood-light));
+    transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hp-controls { display: flex; gap: 8px; align-items: center; }
+.hp-controls input {
+    width: 70px; padding: 0.5em; border: 1px solid var(--gold);
+    border-radius: 8px; background: rgba(255, 255, 255, 0.5);
+    font-family: var(--font-display); font-size: 1rem; text-align: center;
+}
+
+/* ----------------------------------------------------------------- AC --- */
+.card-ac { text-align: center; }
+.ac-shield {
+    width: 110px; height: 124px; margin: 4px auto 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, var(--royal-light), var(--royal));
+    color: var(--parchment);
+    clip-path: polygon(50% 0, 100% 18%, 100% 62%, 50% 100%, 0 62%, 0 18%);
+    box-shadow: 0 4px 14px var(--shadow);
+}
+.ac-shield span { font-family: var(--font-display); font-size: 2.8rem; line-height: 1; }
+.ac-shield small { font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 4px; }
+.ac-detail { color: var(--ink-soft); font-size: 0.9rem; margin: 0 0 12px; }
+
+/* ------------------------------------------------------- Concentração --- */
+.conc-box {
+    text-align: center; padding: 18px; border-radius: 10px;
+    border: 1px dashed var(--ink-soft); margin-bottom: 12px;
+    background: rgba(0, 0, 0, 0.04);
+}
+.conc-box.is-on { border: 1px solid var(--royal-light); background: rgba(106, 79, 160, 0.12); box-shadow: inset 0 0 20px rgba(106, 79, 160, 0.18); }
+.conc-label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--ink-soft); }
+.conc-spell { display: block; font-family: var(--font-display); font-size: 1.25rem; color: var(--royal); margin-top: 4px; }
+
+/* --------------------------------------------------------- Atributos --- */
+.abilities { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.ability {
+    text-align: center; padding: 10px 4px;
+    background: rgba(58, 36, 24, 0.06); border: 1px solid var(--gold);
+    border-radius: 10px;
+}
+.ability-name { display: block; font-size: 0.66rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-soft); }
+.ability-mod { display: block; font-family: var(--font-display); font-size: 1.7rem; color: var(--leather-dark); }
+.ability-score { display: inline-block; font-size: 0.8rem; color: var(--ink-soft); background: rgba(0,0,0,0.06); padding: 0 8px; border-radius: 10px; }
+.stat-strip { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 14px; font-size: 0.85rem; color: var(--ink-soft); }
+.stat-strip strong { color: var(--leather-dark); font-family: var(--font-display); }
+
+/* ----------------------------------------------------------- Slots --- */
+.slots { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; }
+.slot {
+    text-align: center; padding: 12px;
+    background: rgba(59, 42, 99, 0.08); border: 1px solid var(--royal-light);
+    border-radius: 10px;
+}
+.slot-level { font-family: var(--font-display); font-size: 1.4rem; color: var(--royal); }
+.slot-pips { display: flex; gap: 5px; justify-content: center; margin: 8px 0; }
+.pip { width: 14px; height: 14px; border-radius: 50%; background: var(--royal); box-shadow: 0 0 6px var(--royal-light); }
+.pip.spent { background: transparent; border: 1px solid var(--ink-soft); box-shadow: none; }
+.slot-count { font-size: 0.85rem; color: var(--ink-soft); }
+.slot-count .slot-current { font-weight: 700; color: var(--leather-dark); }
+
+/* -------------------------------------------------------- Recursos --- */
+.resource { padding: 12px 0; border-bottom: 1px solid rgba(58,36,24,0.15); }
+.resource:last-child { border-bottom: none; }
+.resource-head { display: flex; justify-content: space-between; font-family: var(--font-display); margin-bottom: 8px; }
+.resource-count { color: var(--gold); }
+.resource-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* -------------------------------------------------------- Features --- */
+.features { display: grid; gap: 16px; }
+.feature-group h3 { font-size: 0.95rem; color: var(--gold); border-bottom: 1px solid var(--gold); padding-bottom: 4px; margin-bottom: 8px; }
+.feature-group ul { margin: 0; padding-left: 18px; }
+.feature-group li { margin-bottom: 6px; font-size: 0.92rem; }
+
+/* --------------------------------------------------------- Magias --- */
+.spell-group-title { font-size: 0.9rem; color: var(--gold); margin: 16px 0 8px; letter-spacing: 0.06em; }
+.spell-list { display: grid; gap: 10px; }
+.spell {
+    display: flex; gap: 12px; align-items: stretch; justify-content: space-between;
+    padding: 12px 14px; border-radius: 10px;
+    background: rgba(58, 36, 24, 0.05); border: 1px solid var(--gold);
+    transition: box-shadow 0.2s ease, transform 0.12s ease;
+}
+.spell:hover { box-shadow: 0 4px 14px var(--shadow); transform: translateY(-1px); }
+.spell-domain { border-left: 4px solid var(--royal-light); }
+.spell-conc { background: rgba(106, 79, 160, 0.06); }
+.spell-main { flex: 1; min-width: 0; }
+.spell-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.spell-name { font-family: var(--font-display); font-size: 1.02rem; color: var(--leather-dark); }
+.spell-badges { display: flex; gap: 4px; }
+.badge {
+    font-family: var(--font-display); font-size: 0.62rem; font-weight: 700;
+    padding: 2px 7px; border-radius: 10px;
+    background: var(--gold); color: var(--leather-dark);
+}
+.badge-cantrip { background: var(--ink-soft); color: var(--parchment); }
+.badge-conc { background: var(--royal); color: var(--parchment); }
+.badge-domain { background: var(--royal-light); color: var(--parchment); }
+.spell-desc { font-size: 0.85rem; color: var(--ink-soft); margin: 6px 0; }
+.spell-rolls { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ----------------------------------------------------------- Dados --- */
+.dice-row { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 8px; }
+.last-roll {
+    text-align: center; font-family: var(--font-display); font-size: 1.4rem;
+    color: var(--leather-dark); margin: 14px 0;
+    padding: 12px; border: 1px solid var(--gold); border-radius: 10px;
+    background: rgba(184, 137, 59, 0.1); min-height: 1.4em;
+    transition: transform 0.2s ease;
+}
+.last-roll.pop { animation: pop 0.4s ease; }
+@keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
+.dice-history, .log-list { list-style: none; margin: 0; padding: 0; max-height: 240px; overflow-y: auto; }
+.dice-history li { display: flex; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid rgba(58,36,24,0.12); font-size: 0.85rem; }
+.dh-dice { font-family: var(--font-display); }
+.dh-result { font-weight: 700; color: var(--blood); }
+.dh-when { color: var(--ink-soft); }
+
+/* ------------------------------------------------------- Histórico --- */
+.log-list li { display: flex; gap: 12px; padding: 8px; border-bottom: 1px solid rgba(58,36,24,0.12); font-size: 0.9rem; animation: rise 0.3s ease both; }
+.log-when { color: var(--gold); font-family: var(--font-display); font-size: 0.78rem; white-space: nowrap; min-width: 90px; }
+.log-action { color: var(--ink); }
+.log-empty { color: var(--ink-soft); font-style: italic; }
+
+/* ----------------------------------------------------------- Toast --- */
+.toast {
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-120%);
+    background: linear-gradient(180deg, var(--leather), var(--leather-dark));
+    color: var(--parchment); border: 1px solid var(--gold);
+    padding: 12px 22px; border-radius: 10px; z-index: 1000;
+    box-shadow: 0 8px 24px var(--shadow); font-family: var(--font-display);
+    opacity: 0; transition: transform 0.35s ease, opacity 0.35s ease; pointer-events: none;
+    max-width: 90vw; text-align: center;
+}
+.toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+.toast.error { background: linear-gradient(180deg, var(--blood-light), var(--blood)); border-color: var(--blood-light); }
+
+/* ------------------------------------------------------- Responsivo --- */
+@media (max-width: 1000px) {
+    .card-hp, .card-ac, .card-conc,
+    .card-abilities, .card-slots, .card-resources,
+    .card-features, .card-spells, .card-dice { grid-column: span 12; }
+}
+@media (max-width: 620px) {
+    body { font-size: 16px; }
+    .grid { padding: 14px; gap: 14px; }
+    .topbar { padding: 14px; }
+    .char-name { font-size: 1.4rem; }
+    .abilities { grid-template-columns: repeat(2, 1fr); }
+    .spell { flex-direction: column; }
+    .btn-cast { align-self: stretch; }
+}

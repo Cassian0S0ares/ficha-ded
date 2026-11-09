@@ -1,0 +1,260 @@
+{% extends 'character/base.html' %}
+{% load static %}
+
+{% block title %}{{ character.name }} — Ficha de D&D 5e{% endblock %}
+{% block body_class %}dashboard{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+
+<!-- Toast / feedback flutuante -->
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<header class="topbar">
+    <div class="topbar-identity">
+        <label class="crest" id="avatar-label" title="Clique para trocar a foto">
+            {% if character.avatar %}
+            <img id="avatar-img" class="avatar-img" src="{{ character.avatar.url }}" alt="Foto de {{ character.name }}">
+            {% else %}
+            <img id="avatar-img" class="avatar-img" src="" alt="Foto de {{ character.name }}" hidden>
+            {% endif %}
+            <span id="avatar-placeholder" class="avatar-placeholder"{% if character.avatar %} hidden{% endif %}>🐢</span>
+            <span class="avatar-hint">📷</span>
+            <input type="file" id="avatar-input" accept="image/*" hidden>
+        </label>
+        <div>
+            <h1 class="char-name">{{ character.name }}</h1>
+            <p class="char-sub">{{ character.race }} · {{ character.class_name }} · {{ character.subclass }} · Nível {{ character.level }}</p>
+        </div>
+    </div>
+    <div class="topbar-actions">
+        <button class="btn btn-rest" data-action="short-rest" data-url="{% url 'short_rest' %}">🔥 Descanso Curto</button>
+        <button class="btn btn-rest btn-long" data-action="long-rest" data-url="{% url 'long_rest' %}">🌙 Descanso Longo</button>
+    </div>
+</header>
+
+<main class="grid">
+
+    <!-- ============================ VIDA ============================ -->
+    <section class="card card-hp">
+        <h2 class="card-title">Pontos de Vida</h2>
+        <div class="hp-readout">
+            <span id="hp-current">{{ character.current_hp }}</span>
+            <span class="hp-sep">/</span>
+            <span id="hp-max">{{ character.max_hp }}</span>
+        </div>
+        <div class="hp-bar">
+            <div id="hp-fill" class="hp-fill" style="width: {{ character.hp_percent }}%"></div>
+        </div>
+        <div class="hp-controls">
+            <input type="number" id="hp-amount" min="0" value="5" aria-label="Quantidade">
+            <button class="btn btn-damage" data-action="damage" data-url="{% url 'take_damage' %}">Receber Dano</button>
+            <button class="btn btn-heal" data-action="heal" data-url="{% url 'heal' %}">Curar</button>
+        </div>
+    </section>
+
+    <!-- ============================ CA ============================ -->
+    <section class="card card-ac">
+        <h2 class="card-title">Defesa</h2>
+        <div class="ac-shield">
+            <span id="ac-value">{{ character.effective_ac }}</span>
+            <small>Classe de Armadura</small>
+        </div>
+        <p class="ac-detail">Base <strong>{{ character.armor_class }}</strong> · Armadura Natural (Tortle)</p>
+        <button class="btn btn-toggle {% if character.shell_defense_active %}is-active{% endif %}"
+                id="shell-btn"
+                data-action="shell-defense" data-url="{% url 'toggle_shell_defense' %}">
+            🛡️ Defesa de Concha <span id="shell-state">{% if character.shell_defense_active %}(ATIVA +4){% else %}(inativa){% endif %}</span>
+        </button>
+    </section>
+
+    <!-- ===================== CONCENTRAÇÃO ===================== -->
+    <section class="card card-conc">
+        <h2 class="card-title">Concentração</h2>
+        <div id="conc-box" class="conc-box {% if character.is_concentrating %}is-on{% endif %}">
+            <span class="conc-label">Concentrando em</span>
+            <span id="conc-spell" class="conc-spell">{{ character.concentration_spell|default:"— Sem concentração ativa —" }}</span>
+        </div>
+        <button class="btn btn-ghost btn-block" data-action="end-conc" data-url="{% url 'end_concentration' %}">Encerrar Concentração</button>
+    </section>
+
+    <!-- ===================== ATRIBUTOS ===================== -->
+    <section class="card card-abilities">
+        <h2 class="card-title">Atributos</h2>
+        <div class="abilities">
+            {% for label, score, modifier in abilities %}
+            <div class="ability">
+                <span class="ability-name">{{ label }}</span>
+                <span class="ability-mod">{{ modifier }}</span>
+                <span class="ability-score">{{ score }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="stat-strip">
+            <span>CD de Magia <strong>{{ character.spell_save_dc }}</strong></span>
+            <span>Ataque Mágico <strong>+{{ character.spell_attack_bonus }}</strong></span>
+            <span>Proficiência <strong>+{{ character.proficiency_bonus }}</strong></span>
+            <span>Deslocamento <strong>{{ character.speed }}m</strong></span>
+        </div>
+    </section>
+
+    <!-- ===================== ESPAÇOS DE MAGIA ===================== -->
+    <section class="card card-slots">
+        <h2 class="card-title">Espaços de Magia</h2>
+        <div id="slots" class="slots">
+            {% for slot in spell_slots %}
+            <div class="slot" data-level="{{ slot.level }}">
+                <span class="slot-level">{{ slot.level }}º</span>
+                <div class="slot-pips">
+                    {% for i in "x"|rjust:slot.maximum %}<span class="pip"></span>{% endfor %}
+                </div>
+                <span class="slot-count"><span class="slot-current">{{ slot.current }}</span>/{{ slot.maximum }}</span>
+            </div>
+            {% endfor %}
+        </div>
+    </section>
+
+    <!-- ===================== RECURSOS DE CLASSE/DOMÍNIO ===================== -->
+    <section class="card card-resources">
+        <h2 class="card-title">Recursos</h2>
+
+        <div class="resource">
+            <div class="resource-head">
+                <span>Canalizar Divindade</span>
+                <span class="resource-count"><span id="cd-current">{{ character.channel_divinity_current }}</span>/<span id="cd-max">{{ character.channel_divinity_max }}</span></span>
+            </div>
+            <div class="resource-actions">
+                <button class="btn btn-sm" data-action="generic" data-url="{% url 'use_channel_divinity' %}">Usar</button>
+                <button class="btn btn-sm" data-action="generic" data-url="{% url 'turn_undead' %}">Expulsar Mortos-Vivos</button>
+                <button class="btn btn-sm btn-heal" data-action="generic" data-url="{% url 'balm_of_peace' %}">Bálsamo da Paz (2d6+5)</button>
+            </div>
+        </div>
+
+        <div class="resource">
+            <div class="resource-head">
+                <span>Vínculo Encorajador</span>
+                <span class="resource-count"><span id="eb-current">{{ character.emboldening_bond_current }}</span>/<span id="eb-max">{{ character.emboldening_bond_max }}</span></span>
+            </div>
+            <div class="resource-actions">
+                <button class="btn btn-sm" data-action="generic" data-url="{% url 'use_emboldening_bond' %}">Usar Vínculo (1d4)</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== HABILIDADES ===================== -->
+    <section class="card card-features">
+        <h2 class="card-title">Habilidades</h2>
+        <div class="features">
+            <div class="feature-group">
+                <h3>Raça — Tortle</h3>
+                <ul>
+                    <li><strong>Armadura Natural:</strong> CA base 17 (não usa escudo nem Destreza).</li>
+                    <li><strong>Defesa de Concha:</strong> +4 na CA; não pode agir além de sair da concha.</li>
+                    <li><strong>Garras:</strong> ataque desarmado 1d4 + 2 (cortante). <button class="btn btn-xs" data-action="roll-formula" data-formula="1d4+2" data-label="Garras">Rolar</button></li>
+                    <li><strong>Prender o Fôlego:</strong> segura a respiração por até 1 hora.</li>
+                    <li><strong>Instinto de Sobrevivência:</strong> proficiência em Sobrevivência.</li>
+                </ul>
+            </div>
+            <div class="feature-group">
+                <h3>Classe — Clérigo</h3>
+                <ul>
+                    <li><strong>Conjuração:</strong> magias de Clérigo usando Sabedoria.</li>
+                    <li><strong>Preparação de Magias:</strong> prepara {{ character.prepared_spells_limit }} magias por descanso longo (magias de domínio não contam no limite).</li>
+                    <li><strong>Canalizar Divindade:</strong> recupera em descanso curto e longo.</li>
+                    <li><strong>Expulsar Mortos-Vivos:</strong> força mortos-vivos a fugir (salvaguarda de Sab.).</li>
+                    <li><strong>Destruir Mortos-Vivos (ND 1):</strong> mortos-vivos de ND ≤ 1 são destruídos ao falhar.</li>
+                    <li><strong>Conjuração Potente:</strong> truques de dano somam o mod. de Sabedoria.</li>
+                </ul>
+            </div>
+            <div class="feature-group">
+                <h3>Domínio da Paz</h3>
+                <ul>
+                    <li><strong>Implemento da Paz:</strong> proficiência em Persuasão.</li>
+                    <li><strong>Vínculo Encorajador:</strong> até 5 criaturas, alcance 9m, 10 min. +1d4 em ataques, testes e salvaguardas (1×/turno; requer outra criatura vinculada a até 9m).</li>
+                    <li><strong>Bálsamo da Paz:</strong> consome Canalizar Divindade; cura 2d6 + 5 a cada criatura tocada (uma vez por uso).</li>
+                    <li><strong>Vínculo Protetor:</strong> reação; teleporta até 9m para até 1,5m de um aliado vinculado e recebe o dano no lugar dele.</li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===================== MAGIAS ===================== -->
+    <section class="card card-spells">
+        <h2 class="card-title">Grimório de Magias</h2>
+
+        <h3 class="spell-group-title">Truques</h3>
+        <div class="spell-list">
+            {% for spell in cantrips %}{% include 'character/_spell.html' %}{% endfor %}
+        </div>
+
+        <h3 class="spell-group-title">Magias de Domínio</h3>
+        <div class="spell-list">
+            {% for spell in domain_spells %}{% include 'character/_spell.html' %}{% endfor %}
+        </div>
+
+        <h3 class="spell-group-title">Magias Preparadas</h3>
+        <div class="spell-list">
+            {% for spell in prepared_spells %}{% include 'character/_spell.html' %}{% endfor %}
+        </div>
+    </section>
+
+    <!-- ===================== ROLAGENS ===================== -->
+    <section class="card card-dice">
+        <h2 class="card-title">Rolagem de Dados</h2>
+        <div class="dice-row">
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d4">d4</button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d6">d6</button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d8">d8</button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d10">d10</button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d12">d12</button>
+            <button class="btn btn-dice" data-action="roll-dice" data-dice="d20">d20</button>
+        </div>
+
+        <h3 class="spell-group-title">Calculadora de Cura e Dano</h3>
+        <div class="dice-row">
+            <button class="btn btn-sm btn-heal" data-action="roll-formula" data-formula="1d8+5" data-label="Curar Ferimentos">Curar Ferimentos 1d8+5</button>
+            <button class="btn btn-sm btn-damage" data-action="roll-formula" data-formula="4d6" data-label="Flecha Guia">Flecha Guia 4d6</button>
+            <button class="btn btn-sm btn-damage" data-action="roll-formula" data-formula="3d8" data-label="Guardiões Espirituais">Guardiões 3d8</button>
+            <button class="btn btn-sm btn-heal" data-action="roll-formula" data-formula="2d6+5" data-label="Bálsamo da Paz">Bálsamo 2d6+5</button>
+            <button class="btn btn-sm btn-damage" data-action="roll-formula" data-formula="1d4+2" data-label="Garras">Garras 1d4+2</button>
+        </div>
+
+        <div class="last-roll" id="last-roll">
+            {% if dice_rolls %}Última: {{ dice_rolls.0.dice }} = {{ dice_rolls.0.result }}{% else %}Nenhuma rolagem ainda.{% endif %}
+        </div>
+
+        <h3 class="spell-group-title">Histórico de Rolagens</h3>
+        <ul id="dice-history" class="dice-history">
+            {% for roll in dice_rolls %}
+            <li><span class="dh-dice">{{ roll.dice }}</span> <span class="dh-result">{{ roll.result }}</span> <span class="dh-when">{{ roll.created_at|date:"H:i" }}</span></li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <!-- ===================== HISTÓRICO ===================== -->
+    <section class="card card-log">
+        <h2 class="card-title">Histórico de Atividades</h2>
+        <ul id="log-list" class="log-list">
+            {% for entry in logs %}
+            <li><span class="log-when">{{ entry.created_at|date:"d/m H:i" }}</span> <span class="log-action">{{ entry.action }}</span></li>
+            {% empty %}
+            <li class="log-empty">Nenhuma atividade registrada ainda.</li>
+            {% endfor %}
+        </ul>
+    </section>
+
+</main>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // URLs resolvidas pelo Django (respeitam prefixos de deploy).
+    window.SHEET_URLS = {
+        rollDice: "{% url 'roll_dice' %}",
+        rollFormula: "{% url 'roll_formula' %}",
+        state: "{% url 'state' %}",
+        uploadAvatar: "{% url 'upload_avatar' %}"
+    };
+</script>
+<script src="{% static 'character/js/app.js' %}"></script>
+{% endblock %}

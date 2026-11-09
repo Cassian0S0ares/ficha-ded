@@ -1,0 +1,40 @@
+============================================================
+   FICHA DE BOTTICELLIUS - D&D 5e
+   Como abrir o programa
+============================================================
+
+MODO FACIL (recomendado)
+------------------------------------------------------------
+1. Abra o terminal nesta pasta (ficha-funfa).
+2. Digite o comando abaixo e tecle ENTER:
+
+       ./iniciar.sh
+
+3. O navegador abre sozinho em:  http://127.0.0.1:8000/
+   A FICHA ABRE DIRETO, SEM LOGIN.
+
+4. Para FECHAR o programa: volte ao terminal e tecle CTRL + C.
+
+(Se aparecer "Permissao negada", rode antes:  chmod +x iniciar.sh)
+
+
+O QUE O SCRIPT FAZ SOZINHO
+------------------------------------------------------------
+- Cria o ambiente e instala as dependencias (so na 1a vez).
+- Prepara o banco de dados.
+- Inicia o servidor e abre a ficha no navegador (sem login).
+
+Obs.: por padrao usa SQLite para abrir sem precisar instalar
+o PostgreSQL. Para usar PostgreSQL, edite o iniciar.sh
+(comente a linha USE_SQLITE) e configure o banco - veja README.md.
+
+
+MODO MANUAL (passo a passo)
+------------------------------------------------------------
+    source .venv/bin/activate
+    export USE_SQLITE=1
+    python manage.py migrate
+    python manage.py runserver
+
+Depois acesse http://127.0.0.1:8000/ no navegador (sem login).
+============================================================
