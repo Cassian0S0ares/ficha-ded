@@ -47,3 +47,58 @@ class AvatarForm(forms.Form):
         if f.size > self.MAX_SIZE:
             raise forms.ValidationError('A imagem deve ter no máximo 5 MB.')
         return f
+
+
+class NameForm(forms.Form):
+    """Valida o nome de uma pasta ou o título de um bloco de notas."""
+
+    name = forms.CharField(max_length=120)
+    folder = forms.IntegerField(required=False)
+
+
+class NoteForm(forms.Form):
+    """Valida a edição de um bloco de notas (campos ausentes não mudam)."""
+
+    title = forms.CharField(max_length=120, required=False)
+    content = forms.CharField(required=False, strip=False, max_length=200000)
+    folder = forms.IntegerField(required=False)
+
+
+class D20Form(forms.Form):
+    """Valida uma jogada de d20 (ataque, teste de atributo ou salvaguarda)."""
+
+    kind = forms.ChoiceField(choices=[(k, k) for k in ('attack', 'check', 'save')])
+    ability = forms.ChoiceField(choices=[
+        (k, k) for k in ('str', 'dex', 'con', 'int', 'wis', 'cha', 'spell', 'claws')
+    ])
+
+
+class ItemForm(forms.Form):
+    """Valida um item do inventário (na edição, campos ausentes não mudam)."""
+
+    CATEGORIES = ('weapon', 'armor', 'gear', 'consumable', 'treasure', 'other')
+
+    name = forms.CharField(max_length=120)
+    category = forms.ChoiceField(choices=[(c, c) for c in CATEGORIES])
+    quantity = forms.IntegerField(min_value=0, max_value=1000000)
+    description = forms.CharField(required=False, max_length=5000)
+    damage_formula = forms.CharField(required=False, max_length=50)
+    equipped = forms.BooleanField(required=False)
+
+
+class CoinsForm(forms.Form):
+    """Valida as moedas (campos ausentes não mudam)."""
+
+    copper = forms.IntegerField(min_value=0, max_value=10000000, required=False)
+    silver = forms.IntegerField(min_value=0, max_value=10000000, required=False)
+    electrum = forms.IntegerField(min_value=0, max_value=10000000, required=False)
+    gold = forms.IntegerField(min_value=0, max_value=10000000, required=False)
+    platinum = forms.IntegerField(min_value=0, max_value=10000000, required=False)
+
+
+class NpcForm(forms.Form):
+    """Valida a edição de um personagem (campos ausentes não mudam)."""
+
+    name = forms.CharField(max_length=120, required=False)
+    affection = forms.IntegerField(min_value=0, max_value=3, required=False)
+    notes = forms.CharField(required=False, strip=False, max_length=200000)

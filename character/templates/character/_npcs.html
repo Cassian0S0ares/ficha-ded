@@ -1,0 +1,53 @@
+<!-- ===================== PERSONAGENS DA CAMPANHA (gaveta lateral) ===================== -->
+<button type="button" class="notes-tab npc-tab" id="npc-tab" aria-controls="npc-drawer" aria-expanded="false">
+    {% include 'character/_icon.html' with icon='person' %}<span>Personagens</span>
+</button>
+
+<aside class="notes-drawer npc-drawer" id="npc-drawer" aria-label="Personagens da campanha" hidden>
+    <header class="notes-head">
+        <h2 class="card-title">{% include 'character/_icon.html' with icon='person' %} Personagens</h2>
+        <button type="button" class="btn btn-ghost btn-sm notes-close" data-npc="close" aria-label="Fechar personagens">✕</button>
+    </header>
+
+    <div class="notes-body">
+        <nav class="notes-side" aria-label="Lista de personagens">
+            <div class="notes-toolbar">
+                <button type="button" class="btn btn-sm btn-primary" data-npc="new">+ Personagem</button>
+            </div>
+            <input type="search" id="npc-search" class="npc-search" placeholder="Pesquisar pelo nome…" aria-label="Pesquisar personagem pelo nome" autocomplete="off">
+            <ul id="npc-list" class="npc-list"></ul>
+        </nav>
+
+        <section class="notes-editor">
+            <p class="notes-empty" id="npc-empty">Selecione um personagem ou adicione um novo.</p>
+            <div class="notes-form" id="npc-form" hidden>
+                <div class="notes-form-head">
+                    <button type="button" class="btn btn-ghost btn-xs notes-back" data-npc="back">‹ Personagens</button>
+                </div>
+                <div class="npc-profile">
+                    <label class="npc-photo" title="Clique para trocar a foto">
+                        <img id="npc-photo-img" alt="" hidden>
+                        <span id="npc-photo-placeholder" class="npc-photo-placeholder">{% include 'character/_icon.html' with icon='person' %}</span>
+                        <span class="npc-photo-hint">{% include 'character/_icon.html' with icon='camera' %}</span>
+                        <input type="file" id="npc-photo-input" accept="image/*" hidden>
+                    </label>
+                    <div class="npc-profile-main">
+                        <input type="text" id="npc-name" class="note-title" maxlength="120" aria-label="Nome do personagem">
+                        <div class="npc-affection" role="radiogroup" aria-label="Afeto de 0 a 3">
+                            <span class="npc-affection-label">Afeto</span>
+                            {% for n in "0123" %}
+                            <button type="button" role="radio" class="npc-affection-btn" data-npc="affection" data-value="{{ n }}" aria-checked="false" aria-label="Afeto {{ n }}">{{ n }}</button>
+                            {% endfor %}
+                            <span id="npc-hearts" class="npc-hearts" aria-hidden="true"></span>
+                        </div>
+                        <div class="notes-meta">
+                            <span id="npc-status" class="note-status" aria-live="polite"></span>
+                            <button type="button" class="btn btn-damage btn-xs" data-npc="delete" id="npc-delete">Apagar personagem</button>
+                        </div>
+                    </div>
+                </div>
+                <textarea id="npc-notes" class="note-content" placeholder="Quem é, onde conheceu, o que prometeu, segredos…" aria-label="Anotações sobre o personagem"></textarea>
+            </div>
+        </section>
+    </div>
+</aside>

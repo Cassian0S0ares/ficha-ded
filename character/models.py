@@ -8,6 +8,11 @@ Entidades:
     Spell        -> magias conhecidas/preparadas pelo personagem.
     ActivityLog  -> histórico de ações relevantes da campanha.
     DiceRoll     -> histórico de rolagens de dados.
+    NoteFolder   -> pastas que agrupam blocos de notas da sessão.
+    Note         -> blocos de notas da sessão.
+    InventoryItem -> itens do inventário (moedas ficam em Character).
+    Npc          -> personagens da campanha (afeto, anotações e foto).
+    UndoSnapshot -> estado anterior a cada ação, para "Desfazer".
 """
 
 from django.conf import settings
@@ -46,6 +51,12 @@ class Character(models.Model):
     max_hp = models.IntegerField('PV máximo', default=59)
     current_hp = models.IntegerField('PV atual', default=59)
     armor_class = models.IntegerField('Classe de Armadura', default=19)
+    temp_hp = models.PositiveIntegerField('PV temporários', default=0)
+
+    # Dados de Vida (Clérigo: d8, um por nível) e testes contra a morte
+    hit_dice_current = models.PositiveIntegerField('Dados de Vida disponíveis', default=8)
+    death_successes = models.PositiveSmallIntegerField('Sucessos contra a morte', default=0)
+    death_failures = models.PositiveSmallIntegerField('Falhas contra a morte', default=0)
 
     # Conjuração
     spell_save_dc = models.IntegerField('CD de resistência de magia', default=16)
@@ -63,6 +74,13 @@ class Character(models.Model):
     # Recursos do Domínio da Paz
     emboldening_bond_max = models.IntegerField('Vínculo Encorajador (máx)', default=3)
     emboldening_bond_current = models.IntegerField('Vínculo Encorajador (atual)', default=3)
+
+    # Moedas
+    copper = models.PositiveIntegerField('Peças de cobre (PC)', default=0)
+    silver = models.PositiveIntegerField('Peças de prata (PP)', default=0)
+    electrum = models.PositiveIntegerField('Peças de electro (PE)', default=0)
+    gold = models.PositiveIntegerField('Peças de ouro (PO)', default=0)
+    platinum = models.PositiveIntegerField('Peças de platina (PL)', default=0)
 
     # Estado dinâmico
     concentration_spell = models.CharField(
@@ -104,8 +122,37 @@ class Character(models.Model):
         return (score - 10) // 2
 
     @property
+    def hit_die(self):
+        """Faces do Dado de Vida da classe."""
+        return {'Cleric': 8}.get(self.class_name, 8)
+
+    @property
+    def hit_dice_max(self):
+        return self.level
+
+    @property
+    def is_dead(self):
+        return self.death_failures >= 3
+
+    @property
+    def is_stable(self):
+        return self.current_hp == 0 and self.death_successes >= 3 and not self.is_dead
+
+    @property
     def is_concentrating(self):
         return bool(self.concentration_spell)
+
+
+class ActiveEffect(models.Model):
+    character = models.ForeignKey(Character, on_delete=models.CASCADE, related_name='active_effects')
+    key = models.CharField(max_length=40)
+    name = models.CharField(max_length=150)
+    rounds_remaining = models.PositiveIntegerField(null=True, blank=True)
+    exhaustion_level = models.PositiveSmallIntegerField(default=1)
+
+    class Meta:
+        ordering = ['id']
+        constraints = [models.UniqueConstraint(fields=['character', 'key'], name='unique_character_effect')]
 
 
 class SpellSlot(models.Model):
@@ -192,3 +239,120 @@ class DiceRoll(models.Model):
 
     def __str__(self):
         return f'{self.dice} = {self.result}'
+
+
+class NoteFolder(models.Model):
+    """Pasta que agrupa blocos de notas da sessão."""
+
+    character = models.ForeignKey(
+        Character, on_delete=models.CASCADE, related_name='note_folders'
+    )
+    name = models.CharField('Nome', max_length=120)
+    created_at = models.DateTimeField('Criada em', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Pasta de Notas'
+        verbose_name_plural = 'Pastas de Notas'
+        ordering = ['name', 'id']
+
+    def __str__(self):
+        return self.name
+
+
+class Note(models.Model):
+    """Bloco de notas da sessão (opcionalmente dentro de uma pasta)."""
+
+    character = models.ForeignKey(
+        Character, on_delete=models.CASCADE, related_name='notes'
+    )
+    folder = models.ForeignKey(
+        NoteFolder, on_delete=models.CASCADE, related_name='notes',
+        blank=True, null=True, verbose_name='Pasta',
+    )
+    title = models.CharField('Título', max_length=120)
+    content = models.TextField('Conteúdo', blank=True)
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Bloco de Notas'
+        verbose_name_plural = 'Blocos de Notas'
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return self.title
+
+
+class InventoryItem(models.Model):
+    """Item do inventário do personagem (sem controle de peso/carga)."""
+
+    CATEGORIES = [
+        ('weapon', 'Arma'),
+        ('armor', 'Armadura'),
+        ('gear', 'Equipamento'),
+        ('consumable', 'Consumível'),
+        ('treasure', 'Tesouro'),
+        ('other', 'Outro'),
+    ]
+
+    character = models.ForeignKey(
+        Character, on_delete=models.CASCADE, related_name='inventory'
+    )
+    name = models.CharField('Nome', max_length=120)
+    category = models.CharField('Categoria', max_length=20, choices=CATEGORIES, default='gear')
+    quantity = models.PositiveIntegerField('Quantidade', default=1)
+    description = models.TextField('Descrição', blank=True)
+    damage_formula = models.CharField('Fórmula de dano', max_length=50, blank=True)
+    equipped = models.BooleanField('Equipado', default=False)
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Item do Inventário'
+        verbose_name_plural = 'Itens do Inventário'
+        ordering = ['name', 'id']
+
+    def __str__(self):
+        return f'{self.name} ×{self.quantity}'
+
+
+class Npc(models.Model):
+    """Personagem encontrado na campanha (NPC), com afeto e anotações."""
+
+    AFFECTION_MAX = 3
+
+    character = models.ForeignKey(
+        Character, on_delete=models.CASCADE, related_name='npcs'
+    )
+    name = models.CharField('Nome', max_length=120)
+    affection = models.PositiveSmallIntegerField('Afeto (0 a 3)', default=0)
+    notes = models.TextField('Anotações', blank=True)
+    photo = models.FileField('Foto', upload_to='npcs/', blank=True, null=True)
+    created_at = models.DateTimeField('Criado em', auto_now_add=True)
+    updated_at = models.DateTimeField('Atualizado em', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Personagem (NPC)'
+        verbose_name_plural = 'Personagens (NPCs)'
+        ordering = ['name', 'id']
+
+    def __str__(self):
+        return self.name
+
+
+class UndoSnapshot(models.Model):
+    """Estado da ficha antes de uma ação, para permitir desfazê-la."""
+
+    character = models.ForeignKey(
+        Character, on_delete=models.CASCADE, related_name='undo_snapshots'
+    )
+    label = models.CharField('Ação', max_length=255)
+    data = models.JSONField('Estado anterior')
+    created_at = models.DateTimeField('Quando', auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Ponto de desfazer'
+        verbose_name_plural = 'Pontos de desfazer'
+        ordering = ['-id']
+
+    def __str__(self):
+        return self.label

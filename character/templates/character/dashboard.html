@@ -33,12 +33,34 @@
         </div>
     </div>
     <div class="topbar-actions">
+        <button class="btn btn-undo" id="undo-btn" data-action="undo" data-url="{% url 'undo_last' %}"
+                {% if not state.undo_label %}disabled{% endif %}
+                title="{% if state.undo_label %}Desfazer: {{ state.undo_label }} (Ctrl+Z){% else %}Nada para desfazer{% endif %}"
+                aria-label="{% if state.undo_label %}Desfazer: {{ state.undo_label }}{% else %}Nada para desfazer{% endif %}">{% include 'character/_icon.html' with icon='undo' %} Desfazer</button>
         <button class="btn btn-rest" data-action="short-rest" data-url="{% url 'short_rest' %}">{% include 'character/_icon.html' with icon='sun' %} Descanso Curto</button>
         <button class="btn btn-rest btn-long" data-action="long-rest" data-url="{% url 'long_rest' %}">{% include 'character/_icon.html' with icon='moon' %} Descanso Longo</button>
     </div>
 </header>
 
 <main class="grid">
+    <section class="card card-effects" aria-labelledby="effects-title">
+        <div class="effects-heading">
+            <h2 id="effects-title" class="card-title">Condições e efeitos ativos</h2>
+            <button class="btn" data-action="effect-round" data-url="{% url 'effect_round' %}">Avançar rodada · 6 s</button>
+        </div>
+        <div id="effect-alerts" role="status" aria-live="polite"></div>
+        <div id="active-effects"></div>
+        <details open>
+            <summary>Marcar condições e benefícios</summary>
+            <div class="condition-buttons">
+                {% for key, condition in conditions %}
+                <button class="btn btn-sm" data-action="effect-toggle" data-key="{{ key }}" data-url="{% url 'effect_change' %}" aria-pressed="false" title="{{ condition.1 }}">{{ condition.0 }}</button>
+                {% endfor %}
+            </div>
+        </details>
+        <p class="effects-help">Edite as rodadas restantes e salve. Vazio = sem prazo. Avance uma vez ao final de cada rodada completa de combate. Ambos os descansos limpam os efeitos.</p>
+        <small>Regras: D&D 5e (2014). <a href="https://www.dndbeyond.com/sources/dnd/basic-rules-2014/appendix-a-conditions" target="_blank" rel="noopener">Consultar condições</a>. Os resumos orientam as jogadas; modificadores situacionais são aplicados na mesa.</small>
+    </section>
 
     <!-- ============================ VIDA ============================ -->
     <section class="card card-hp">
@@ -47,6 +69,7 @@
             <span id="hp-current">{{ character.current_hp }}</span>
             <span class="hp-sep">/</span>
             <span id="hp-max">{{ character.max_hp }}</span>
+            <span id="hp-temp" class="hp-temp" title="PV temporários"{% if not character.temp_hp %} hidden{% endif %}>+<span id="hp-temp-value">{{ character.temp_hp }}</span> temp.</span>
         </div>
         <div class="hp-bar">
             <div id="hp-fill" class="hp-fill" style="width: {{ character.hp_percent }}%"></div>
@@ -55,6 +78,40 @@
             <input type="number" id="hp-amount" min="0" value="5" aria-label="Quantidade">
             <button class="btn btn-damage" data-action="damage" data-url="{% url 'take_damage' %}">Receber Dano</button>
             <button class="btn btn-heal" data-action="heal" data-url="{% url 'heal' %}">Curar</button>
+        </div>
+        <label class="hp-critical" id="hp-critical-label"{% if character.current_hp %} hidden{% endif %}>
+            <input type="checkbox" id="hp-critical"> Acerto crítico (2 falhas contra a morte)
+        </label>
+
+        <div class="vital-row">
+            <span class="vital-label">PV temporários</span>
+            <input type="number" id="temp-amount" min="0" max="10000" value="5" aria-label="PV temporários a receber">
+            <button class="btn btn-sm" data-action="temp-hp" data-url="{% url 'temp_hp' %}" title="Não se somam: fica o maior. 0 remove.">Definir</button>
+        </div>
+
+        <div class="vital-row">
+            <span class="vital-label">Dados de Vida</span>
+            <span class="vital-value"><strong id="hd-current">{{ character.hit_dice_current }}</strong>/<span id="hd-max">{{ character.hit_dice_max }}</span> · d{{ character.hit_die }}</span>
+            <button class="btn btn-sm btn-heal" id="hd-btn" data-action="hit-die" data-url="{% url 'hit_die' %}"
+                    title="Em descanso curto: cura 1d{{ character.hit_die }} + Constituição"
+                    {% if not character.hit_dice_current %}disabled{% endif %}>Gastar 1d{{ character.hit_die }}{% if con_mod >= 0 %}+{% endif %}{{ con_mod }}</button>
+        </div>
+
+        <div class="death-box" id="death-box"{% if character.current_hp %} hidden{% endif %} aria-live="polite">
+            <h3 class="spell-group-title">Testes contra a morte</h3>
+            <div class="death-track">
+                <span class="death-track-label">Sucessos</span>
+                {% for n in "123" %}<button type="button" class="death-pip death-pip-success" data-action="death-set" data-kind="successes" data-value="{{ n }}" aria-label="Marcar {{ n }} sucesso(s)"></button>{% endfor %}
+            </div>
+            <div class="death-track">
+                <span class="death-track-label">Falhas</span>
+                {% for n in "123" %}<button type="button" class="death-pip death-pip-failure" data-action="death-set" data-kind="failures" data-value="{{ n }}" aria-label="Marcar {{ n }} falha(s)"></button>{% endfor %}
+            </div>
+            <p class="death-status" id="death-status"></p>
+            <div class="death-actions">
+                <button class="btn btn-sm btn-damage" id="death-roll-btn" data-action="death-save" data-url="{% url 'death_save' %}">Rolar teste contra a morte</button>
+                <button class="btn btn-sm btn-heal" id="revive-btn" data-action="revive" data-url="{% url 'revive' %}" hidden>Reviver com 1 PV</button>
+            </div>
         </div>
     </section>
 
@@ -84,6 +141,7 @@
             <span class="conc-label">Concentrando em</span>
             <span id="conc-spell" class="conc-spell">{{ character.concentration_spell|default:"— Sem concentração ativa —" }}</span>
         </div>
+        <p id="conc-save" class="conc-save" aria-live="polite">Ao receber dano: salvaguarda de CON (+{{ con_mod }}) contra CD 10 ou metade do dano, o que for maior. Defesa de Concha dá vantagem.</p>
         <button class="btn btn-ghost btn-block" data-action="end-conc" data-url="{% url 'end_concentration' %}">Encerrar Concentração</button>
     </section>
 
@@ -91,11 +149,14 @@
     <section class="card card-abilities">
         <h2 class="card-title">Atributos</h2>
         <div class="abilities">
-            {% for label, score, modifier in abilities %}
+            {% for key, label, score, modifier in abilities %}
             <div class="ability">
-                <span class="ability-name">{{ label }}</span>
-                <span class="ability-mod">{{ modifier }}</span>
-                <span class="ability-score">{{ score }}</span>
+                <button type="button" class="ability-roll" data-action="roll-d20" data-kind="check" data-ability="{{ key }}" title="Rolar teste de {{ label }} (d20 {{ modifier }})" aria-label="Rolar teste de {{ label }}, d20 {{ modifier }}">
+                    <span class="ability-name">{{ label }}</span>
+                    <span class="ability-mod">{{ modifier }}</span>
+                    <span class="ability-score">{{ score }}</span>
+                </button>
+                <button type="button" class="btn btn-xs ability-save" data-action="roll-d20" data-kind="save" data-ability="{{ key }}" aria-label="Salvaguarda de {{ label }}">Salv.</button>
             </div>
             {% endfor %}
         </div>
@@ -267,19 +328,33 @@
     <section class="card card-spells">
         <h2 class="card-title">Grimório de Magias</h2>
 
-        <h3 class="spell-group-title">Truques</h3>
-        <div class="spell-list">
-            {% for spell in cantrips %}{% include 'character/_spell.html' %}{% endfor %}
+        <div class="spell-search">
+            <input type="search" id="spell-search" placeholder="Buscar magia pelo nome…" aria-label="Buscar magia pelo nome" aria-controls="spell-groups" autocomplete="off">
+            <span id="spell-search-count" class="spell-search-count" aria-live="polite"></span>
         </div>
 
-        <h3 class="spell-group-title">Magias de Domínio</h3>
-        <div class="spell-list">
-            {% for spell in domain_spells %}{% include 'character/_spell.html' %}{% endfor %}
-        </div>
+        <div id="spell-groups">
+            <div class="spell-group">
+                <h3 class="spell-group-title">Truques</h3>
+                <div class="spell-list">
+                    {% for spell in cantrips %}{% include 'character/_spell.html' %}{% endfor %}
+                </div>
+            </div>
 
-        <h3 class="spell-group-title">Magias Preparadas</h3>
-        <div class="spell-list">
-            {% for spell in prepared_spells %}{% include 'character/_spell.html' %}{% endfor %}
+            <div class="spell-group">
+                <h3 class="spell-group-title">Magias de Domínio</h3>
+                <div class="spell-list">
+                    {% for spell in domain_spells %}{% include 'character/_spell.html' %}{% endfor %}
+                </div>
+            </div>
+
+            <div class="spell-group">
+                <h3 class="spell-group-title">Magias Preparadas</h3>
+                <div class="spell-list">
+                    {% for spell in prepared_spells %}{% include 'character/_spell.html' %}{% endfor %}
+                </div>
+            </div>
+            <p id="spell-search-empty" class="spell-search-empty" hidden>Nenhuma magia com esse nome.</p>
         </div>
     </section>
 
@@ -293,6 +368,19 @@
             <button class="btn btn-dice" data-action="roll-dice" data-dice="d10" aria-label="Rolar dado de 10 faces" title="Rolar d10">{% include 'character/_die.html' with die='d10' %}<span>d10</span></button>
             <button class="btn btn-dice" data-action="roll-dice" data-dice="d12" aria-label="Rolar dado de 12 faces" title="Rolar d12">{% include 'character/_die.html' with die='d12' %}<span>d12</span></button>
             <button class="btn btn-dice" data-action="roll-dice" data-dice="d20" aria-label="Rolar dado de 20 faces" title="Rolar d20">{% include 'character/_die.html' with die='d20' %}<span>d20</span></button>
+        </div>
+
+        <h3 class="spell-group-title">Ataques</h3>
+        <div class="dice-row">
+            <button class="btn btn-sm btn-cast" data-action="roll-d20" data-kind="attack" data-ability="spell">Ataque mágico +{{ character.spell_attack_bonus }}</button>
+            <button class="btn btn-sm" data-action="roll-d20" data-kind="attack" data-ability="claws">Garras +{{ claws_bonus }}</button>
+        </div>
+
+        <div class="roll-effects" id="roll-effects-box"{% if not state.roll_effects %} hidden{% endif %}>
+            <h3 class="spell-group-title">Efeitos nas rolagens</h3>
+            <ul id="roll-effects">
+                {% for line in state.roll_effects %}<li>{{ line }}</li>{% endfor %}
+            </ul>
         </div>
 
         <h3 class="spell-group-title">Calculadora de Cura e Dano</h3>
@@ -316,6 +404,8 @@
         </ul>
     </section>
 
+    {% include 'character/_inventory.html' %}
+
     <!-- ===================== HISTÓRICO ===================== -->
     <section class="card card-log">
         <h2 class="card-title">Histórico de Atividades</h2>
@@ -329,6 +419,9 @@
     </section>
 
 </main>
+
+{% include 'character/_notes.html' %}
+{% include 'character/_npcs.html' %}
 {% endblock %}
 
 {% block scripts %}
@@ -337,9 +430,20 @@
     window.SHEET_URLS = {
         rollDice: "{% url 'roll_dice' %}",
         rollFormula: "{% url 'roll_formula' %}",
+        rollD20: "{% url 'roll_d20' %}",
+        deathSet: "{% url 'death_set' %}",
+        inventory: "{% url 'inventory' %}",
+        npcs: "{% url 'npcs' %}",
         state: "{% url 'state' %}",
-        uploadAvatar: "{% url 'upload_avatar' %}"
+        uploadAvatar: "{% url 'upload_avatar' %}",
+        notes: "{% url 'notes' %}",
+        effectChange: "{% url 'effect_change' %}"
     };
 </script>
+{{ state|json_script:"sheet-initial-state" }}
 <script src="{% static 'character/js/app.js' %}"></script>
+<script src="{% static 'character/js/inventory.js' %}"></script>
+<script src="{% static 'character/js/grimoire.js' %}"></script>
+<script src="{% static 'character/js/notes.js' %}"></script>
+<script src="{% static 'character/js/npcs.js' %}"></script>
 {% endblock %}

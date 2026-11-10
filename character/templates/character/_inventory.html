@@ -1,0 +1,47 @@
+<!-- ===================== INVENTÁRIO ===================== -->
+<section class="card card-inventory" id="inventory" aria-labelledby="inventory-title">
+    <div class="inv-heading">
+        <h2 id="inventory-title" class="card-title">Inventário</h2>
+        <button type="button" class="btn btn-sm btn-primary" data-inv="new">+ Item</button>
+    </div>
+
+    <div class="inv-coins" role="group" aria-label="Moedas">
+        {% for coin in inventory.coins %}
+        <label class="inv-coin inv-coin-{{ coin.field }}" title="Peças de {{ coin.name }}">
+            <span>{{ coin.short }}</span>
+            <input type="number" min="0" max="10000000" step="1" name="{{ coin.field }}" value="{{ coin.amount }}" aria-label="Peças de {{ coin.name }}">
+        </label>
+        {% endfor %}
+    </div>
+
+    <form class="inv-form" id="inv-form" hidden novalidate>
+        <h3 class="spell-group-title" id="inv-form-title">Novo item</h3>
+        <div class="inv-form-grid">
+            <label class="inv-field-name">Nome
+                <input type="text" name="name" maxlength="120" required>
+            </label>
+            <label>Categoria
+                <select name="category">
+                    {% for c in inventory.categories %}<option value="{{ c.key }}">{{ c.label }}</option>{% endfor %}
+                </select>
+            </label>
+            <label>Quantidade
+                <input type="number" name="quantity" min="0" max="1000000" step="1" value="1" required>
+            </label>
+            <label>Dano (opcional)
+                <input type="text" name="damage_formula" maxlength="50" placeholder="ex.: 1d6+2">
+            </label>
+            <label class="inv-check"><input type="checkbox" name="equipped"> Equipado</label>
+            <label class="inv-field-desc">Descrição
+                <textarea name="description" rows="2" maxlength="5000" placeholder="Efeito, propriedades, de onde veio…"></textarea>
+            </label>
+        </div>
+        <div class="inv-form-actions">
+            <button type="submit" class="btn btn-sm btn-heal">Salvar</button>
+            <button type="button" class="btn btn-sm btn-ghost" data-inv="cancel">Cancelar</button>
+        </div>
+    </form>
+
+    <div id="inv-list" class="inv-list"></div>
+</section>
+{{ inventory|json_script:"inventory-data" }}

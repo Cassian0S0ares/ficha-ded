@@ -2,7 +2,10 @@
 
 from django.contrib import admin
 
-from .models import ActivityLog, Character, DiceRoll, Spell, SpellSlot
+from .models import (
+    ActivityLog, Character, DiceRoll, InventoryItem, Note, NoteFolder, Npc,
+    Spell, SpellSlot,
+)
 
 
 class SpellSlotInline(admin.TabularInline):
@@ -49,3 +52,30 @@ class ActivityLogAdmin(admin.ModelAdmin):
 class DiceRollAdmin(admin.ModelAdmin):
     list_display = ('character', 'dice', 'result', 'detail', 'created_at')
     list_filter = ('dice', 'created_at')
+
+
+@admin.register(NoteFolder)
+class NoteFolderAdmin(admin.ModelAdmin):
+    list_display = ('name', 'character', 'created_at')
+    search_fields = ('name',)
+
+
+@admin.register(Note)
+class NoteAdmin(admin.ModelAdmin):
+    list_display = ('title', 'folder', 'character', 'updated_at')
+    list_filter = ('folder',)
+    search_fields = ('title', 'content')
+
+
+@admin.register(InventoryItem)
+class InventoryItemAdmin(admin.ModelAdmin):
+    list_display = ('name', 'category', 'quantity', 'equipped', 'character')
+    list_filter = ('category', 'equipped')
+    search_fields = ('name', 'description')
+
+
+@admin.register(Npc)
+class NpcAdmin(admin.ModelAdmin):
+    list_display = ('name', 'affection', 'character', 'updated_at')
+    list_filter = ('affection',)
+    search_fields = ('name', 'notes')

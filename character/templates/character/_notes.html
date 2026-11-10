@@ -1,0 +1,53 @@
+<!-- ===================== NOTAS DA SESSÃO (gaveta lateral) ===================== -->
+<button type="button" class="notes-tab" id="notes-tab" aria-controls="notes-drawer" aria-expanded="false">
+    {% include 'character/_icon.html' with icon='scroll' %}<span>Notas</span>
+</button>
+
+<aside class="notes-drawer" id="notes-drawer" aria-label="Notas da sessão" hidden>
+    <header class="notes-head">
+        <h2 class="card-title">{% include 'character/_icon.html' with icon='scroll' %} Notas da Sessão</h2>
+        <button type="button" class="btn btn-ghost btn-sm notes-close" data-notes="close" aria-label="Fechar notas">✕</button>
+    </header>
+
+    <div class="notes-body">
+        <nav class="notes-side" aria-label="Pastas e blocos de notas">
+            <div class="notes-toolbar">
+                <button type="button" class="btn btn-sm btn-primary" data-notes="new-note">+ Bloco</button>
+                <button type="button" class="btn btn-sm" data-notes="new-folder">{% include 'character/_icon.html' with icon='folder' %} Pasta</button>
+            </div>
+            <p class="notes-drag-hint">Arraste um bloco para uma pasta ou use o seletor no editor.</p>
+            <div id="notes-tree" class="notes-tree"></div>
+        </nav>
+
+        <section class="notes-editor" id="notes-editor">
+            <p class="notes-empty" id="notes-empty">Selecione um bloco de notas ou crie um novo.</p>
+            <div class="notes-form" id="notes-form" hidden>
+                <div class="notes-form-head">
+                    <button type="button" class="btn btn-ghost btn-xs notes-back" data-notes="back">‹ Blocos</button>
+                    <input type="text" id="note-title" class="note-title" maxlength="120" aria-label="Título do bloco de notas">
+                </div>
+                <div class="notes-meta">
+                    <label>Pasta
+                        <select id="note-folder"></select>
+                    </label>
+                    <span id="note-status" class="note-status" aria-live="polite"></span>
+                    <button type="button" class="btn btn-damage btn-xs" data-notes="delete-note">Apagar bloco</button>
+                </div>
+                <textarea id="note-content" class="note-content" placeholder="Anote aqui o que aconteceu na sessão…" aria-label="Conteúdo do bloco de notas"></textarea>
+            </div>
+        </section>
+    </div>
+</aside>
+
+<dialog id="notes-dialog" class="sheet-dialog" aria-labelledby="notes-dialog-title">
+    <form method="dialog" id="notes-dialog-form">
+        <h2 id="notes-dialog-title" class="card-title"></h2>
+        <p id="notes-dialog-message"></p>
+        <label id="notes-dialog-label" for="notes-dialog-input">Nome</label>
+        <input id="notes-dialog-input" type="text" maxlength="120" autocomplete="off">
+        <div class="sheet-dialog-actions">
+            <button type="button" class="btn btn-ghost" id="notes-dialog-cancel">Cancelar</button>
+            <button type="submit" class="btn" id="notes-dialog-submit">Salvar</button>
+        </div>
+    </form>
+</dialog>
