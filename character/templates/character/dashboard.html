@@ -23,13 +23,9 @@
             <input type="file" id="avatar-input" accept="image/*" hidden>
         </label>
         <div class="hero-copy">
-            <p class="char-kicker">Diário de jornada <span class="kicker-divider" aria-hidden="true"></span> Eremita errante</p>
+            <p class="char-kicker">Ficha de personagem <span class="kicker-divider" aria-hidden="true"></span></p>
             <h1 class="char-name">{{ character.name }}</h1>
             <p class="char-sub">{{ character.race }} · {{ class_label }} · {{ subclass_label }} · Nível {{ character.level }}</p>
-            <p class="char-story">Seu povo percorre o mundo para amparar quem precisa. A cada encontro, um passo na busca pelo nirvana.</p>
-            <div class="hero-signposts" aria-label="Caminho do personagem">
-                <span>O caminho</span><span aria-hidden="true">·</span><span>Compaixão</span><span aria-hidden="true">·</span><span>Paz interior</span>
-            </div>
         </div>
     </div>
     <div class="topbar-actions">
@@ -46,7 +42,20 @@
     <section class="card card-effects" aria-labelledby="effects-title">
         <div class="effects-heading">
             <h2 id="effects-title" class="card-title">Condições e efeitos ativos</h2>
-            <button class="btn" data-action="effect-round" data-url="{% url 'effect_round' %}">Avançar rodada · 6 s</button>
+            <div class="effects-heading-actions">
+                <div class="inspiration" id="inspiration" data-has="{{ character.heroic_inspiration|yesno:'1,0' }}">
+                    <button type="button" class="btn btn-sm inspiration-gain" data-action="inspiration-set" data-value="1" data-url="{% url 'inspiration' %}"
+                            {% if character.heroic_inspiration %}hidden{% endif %}
+                            title="Marque quando o mestre der inspiração">{% include 'character/_icon.html' with icon='star' %} Ganhar inspiração</button>
+                    <button type="button" class="btn btn-sm inspiration-arm" id="inspiration-arm" data-action="inspiration-arm" aria-pressed="false"
+                            {% if not character.heroic_inspiration %}hidden{% endif %}
+                            title="A próxima jogada de d20 (ataque, teste, perícia ou salvaguarda) terá vantagem e gasta a inspiração">{% include 'character/_icon.html' with icon='star' %} <span id="inspiration-arm-text">Usar na próxima rolagem</span></button>
+                    <button type="button" class="btn btn-ghost btn-xs inspiration-remove" data-action="inspiration-set" data-value="0" data-url="{% url 'inspiration' %}"
+                            {% if not character.heroic_inspiration %}hidden{% endif %}
+                            aria-label="Remover inspiração heroica sem usar" title="Remover sem usar">✕</button>
+                </div>
+                <button class="btn" data-action="effect-round" data-url="{% url 'effect_round' %}">Avançar rodada · 6 s</button>
+            </div>
         </div>
         <div id="effect-alerts" role="status" aria-live="polite"></div>
         <div id="active-effects"></div>
@@ -425,6 +434,23 @@
     </section>
 
 </main>
+
+<dialog id="long-rest-dialog" class="sheet-dialog" aria-labelledby="long-rest-title" aria-describedby="long-rest-description">
+    <form method="dialog">
+        <h2 id="long-rest-title" class="card-title">{% include 'character/_icon.html' with icon='moon' %} Descanso longo</h2>
+        <p id="long-rest-description">Confirmar o descanso longo de {{ character.name }}?</p>
+        <ul>
+            <li>Restaura os pontos de vida, espaços de magia e recursos de classe.</li>
+            <li>Recupera até metade do máximo de Dados de Vida, com mínimo de um.</li>
+            <li>Limpa condições, efeitos, concentração, PV temporários e testes contra a morte.</li>
+            <li>Desativa a Defesa de Concha.</li>
+        </ul>
+        <div class="sheet-dialog-actions">
+            <button type="submit" class="btn btn-ghost" value="cancel" autofocus>Cancelar</button>
+            <button type="submit" class="btn btn-rest btn-long" value="confirm">Confirmar descanso</button>
+        </div>
+    </form>
+</dialog>
 
 {% include 'character/_notes.html' %}
 {% include 'character/_npcs.html' %}

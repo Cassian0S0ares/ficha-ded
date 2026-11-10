@@ -230,7 +230,29 @@ D20_ATTACKS = {
 }
 
 
-def roll_d20(character, kind, ability=None, *, label='', dc=None):
+INSPIRATION = 'Inspiração heroica'
+
+
+def _spend_inspiration(character, ctx):
+    """Gasta a inspiração heroica para ganhar vantagem nesta jogada."""
+    if not character.heroic_inspiration:
+        raise ValueError('Sem inspiração heroica para usar.')
+    ctx['advantage'].append(INSPIRATION)
+    character.heroic_inspiration = False
+    character.save(update_fields=['heroic_inspiration', 'updated_at'])
+
+
+def set_inspiration(character, value):
+    """Ganha (True) ou remove (False) a inspiração heroica."""
+    if character.heroic_inspiration == value:
+        raise ValueError('Já tem inspiração heroica.' if value else 'Não tem inspiração heroica.')
+    character.heroic_inspiration = value
+    character.save(update_fields=['heroic_inspiration', 'updated_at'])
+    log(character, 'Ganhou inspiração heroica.' if value else 'Inspiração heroica removida.')
+    return character
+
+
+def roll_d20(character, kind, ability=None, *, label='', dc=None, inspiration=False):
     """Rola d20 de ataque, teste ou salvaguarda aplicando as condições ativas.
 
     kind: 'attack' (ability = 'spell' ou 'claws'), 'check' ou 'save'
@@ -238,6 +260,8 @@ def roll_d20(character, kind, ability=None, *, label='', dc=None):
     rolls.SKILLS; é um teste de atributo). Vantagem e desvantagem vêm das
     condições (ver character.rolls); bônus como +1d4 de Abençoar e do
     Vínculo são somados. Levanta SpellCastError se a condição impede a jogada.
+    inspiration=True gasta a inspiração heroica para rolar com vantagem
+    (não é gasta em falha automática).
     """
     if kind == 'attack':
         if ability not in D20_ATTACKS:
@@ -270,6 +294,8 @@ def roll_d20(character, kind, ability=None, *, label='', dc=None):
                             shell_defense=character.shell_defense_active)
     if ctx['blocked']:
         raise SpellCastError(ctx['blocked'])
+    if inspiration and not ctx['auto_fail']:
+        _spend_inspiration(character, ctx)
     mode = rolls.roll_mode(ctx)
     sign = '+' if modifier >= 0 else '-'
 
@@ -302,6 +328,7 @@ def roll_d20(character, kind, ability=None, *, label='', dc=None):
         'rolls': dice, 'natural': natural, 'modifier': modifier,
         'bonus_total': bonus_total, 'auto_fail': bool(ctx['auto_fail']),
         'success': success, 'warnings': ctx['warnings'],
+        'inspiration': INSPIRATION in ctx['advantage'],
         'critical': natural == 20 if kind == 'attack' else False,
         'fumble': natural == 1 if kind == 'attack' else False,
     }
@@ -326,7 +353,7 @@ def _wake_up(character):
     character.active_effects.filter(key='unconscious').delete()
 
 
-def take_damage(character, amount, critical=False):
+def take_damage(character, amount, critical=False, inspiration=False):
     """Aplica dano: gasta primeiro os PV temporários e não deixa os PV abaixo de 0.
 
     Ao chegar a 0 PV fica Inconsciente; se o dano que sobrar for igual ou
@@ -374,7 +401,7 @@ def take_damage(character, amount, critical=False):
         spell = character.concentration_spell
         end_concentration(character)
         return {'spell': spell, 'unconscious': True, 'success': False}
-    return concentration_save(character, amount)
+    return concentration_save(character, amount, inspiration=inspiration)
 
 
 def heal(character, amount):
@@ -430,7 +457,7 @@ def spend_hit_die(character):
     return {'label': 'Dado de Vida', 'total': total, 'detail': detail}
 
 
-def roll_death_save(character):
+def roll_death_save(character, inspiration=False):
     """Teste contra a morte (0 PV): 10+ sucesso; 20 natural volta com 1 PV;
     1 natural conta 2 falhas. Condições como Abençoado e Exausto 3 se aplicam."""
     if character.current_hp > 0:
@@ -441,6 +468,8 @@ def roll_death_save(character):
         raise SpellCastError('Já está estável: não precisa mais rolar.')
 
     ctx = rolls.d20_context(effects_map(character), 'save')
+    if inspiration:
+        _spend_inspiration(character, ctx)
     mode = rolls.roll_mode(ctx)
     dice = [_roll_die(20) for _ in range(1 if mode == 'normal' else 2)]
     natural = (max if mode == 'advantage' else min)(dice)
@@ -519,7 +548,7 @@ def set_concentration(character, spell_name):
     return character
 
 
-def concentration_save(character, damage):
+def concentration_save(character, damage, inspiration=False):
     """Salvaguarda de Constituição para manter a concentração após dano.
 
     CD = 10 ou metade do dano (arredondada para baixo), o que for maior.
@@ -528,7 +557,8 @@ def concentration_save(character, damage):
     """
     spell = character.concentration_spell
     dc = max(10, damage // 2)
-    roll = roll_d20(character, 'save', 'con', label='Salv. CON (concentração)', dc=dc)
+    roll = roll_d20(character, 'save', 'con', label='Salv. CON (concentração)', dc=dc,
+                    inspiration=inspiration)
     outcome = 'mantida' if roll['success'] else 'perdida'
     log(character, f'Concentração em "{spell}" {outcome}.')
     if not roll['success']:
@@ -780,6 +810,7 @@ def serialize_state(character):
         'max_hp': character.max_hp,
         'hp_percent': character.hp_percent,
         'temp_hp': character.temp_hp,
+        'heroic_inspiration': character.heroic_inspiration,
         'skills': serialize_skills(character),
         'passive_perception': 10 + skill_bonus(character, 'perception'),
         'hit_die': character.hit_die,

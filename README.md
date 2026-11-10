@@ -1,98 +1,182 @@
-# Ficha de Botticellius — Gerenciador de Ficha D&D 5e
+﻿# Ficha de Botticellius — Gerenciador de Ficha D&D 5e
 
-Aplicação web em **Django 5 + PostgreSQL** para gerenciar a ficha de D&D 5e do
-personagem **Botticellius** (Tortle · Clérigo · Domínio da Paz, nível 8) durante
-campanhas longas, com persistência imediata no banco e interface com tema de
-fantasia medieval.
+Ficha web de **Botticellius** (Tortle · Clérigo · Domínio da Paz · nível 8),
+com tema de fantasia, persistência no banco e atualização sem recarregar a página.
+Back-end em **Django**, front-end em **JavaScript puro + Fetch API**.
+O `requirements.txt` declara Django >= 5.2 e < 6.0 e psycopg >= 3.1.
 
-## Funcionalidades
+A ficha principal **abre sem login**, com um personagem padrão compartilhado,
+criado automaticamente no primeiro acesso. O vínculo com usuário existe no modelo,
+mas a interface atual não oferece seleção de usuário ou de fichas.
+O painel `/admin/` tem autenticação própria e uso opcional.
 
-- **Vida**: barra gráfica, receber dano e curar (limites 0 / PV máximo).
-- **Defesa**: CA com recálculo automático da **Defesa de Concha** (+4).
-- **Espaços de magia**: 1º=4, 2º=3, 3º=3, 4º=2, com indicadores visuais.
-- **Conjuração**: cada magia tem botão *Conjurar* que valida e consome o espaço
-  do círculo correto via AJAX (truques não gastam espaço).
-- **Concentração**: inicia/substitui/encerra a magia concentrada.
-- **Recursos de classe/domínio**: Canalizar Divindade, Expulsar Mortos-Vivos,
-  Bálsamo da Paz (2d6+5) e Vínculo Encorajador, com contadores no banco.
-- **Rolagens**: d4–d20 e calculadora de cura/dano (1d8+5, 4d6, 3d8, 2d6+5,
-  1d4+2…), com histórico salvo.
-- **Descansos**: curto (recupera Canalizar Divindade) e longo (restaura PV,
-  recursos, espaços, zera concentração e Defesa de Concha).
-- **Histórico** completo de atividades e rolagens.
-- **Autenticação** do Django (cada usuário tem sua própria ficha; o schema já
-  suporta múltiplos personagens por usuário).
+## Funcionalidades atuais
 
-## Estrutura
+### Vida, defesa e recursos
 
-```
-botticellius_sheet/        # projeto Django
-  settings.py              # configuração (PostgreSQL via env; USE_SQLITE p/ dev)
-  urls.py                  # admin, login/logout, app character
-character/                 # app principal
-  models.py                # Character, SpellSlot, Spell, ActivityLog, DiceRoll
-  services.py              # regras de negócio (camada de serviços)
-  views.py                 # dashboard + endpoints AJAX (JSON)
-  urls.py                  # rotas do app
-  forms.py                 # validação de payloads / cadastro
-  seed_data.py             # catálogo de magias e espaços iniciais
-  admin.py                 # admin do Django
-  management/commands/seed.py   # seed manual opcional
-  migrations/              # migrações
-  templates/character/     # base, login, signup, dashboard, _spell
-  static/character/        # CSS (tema medieval) e JS (Fetch API)
-```
+- Dano e cura, com barra de PV e limites de vida.
+- PV temporários, absorvidos antes dos PV normais.
+- Dados de Vida: gastar um dado para recuperar PV e acompanhar os restantes.
+- Testes contra a morte: rolagem, marcação manual de sucessos/falhas,
+  estabilização e controle de morte; ação para reviver na ficha.
+- Defesa de Concha com recálculo da CA (+4).
+- Contadores de Canalizar Divindade e Vínculo Encorajador; ações de
+  Expulsar Mortos-Vivos e Bálsamo da Paz.
+
+### Magias, condições e rolagens
+
+- Grimório com busca por nome, ignorando acentos e maiúsculas, dividido em
+  truques, magias de domínio e magias preparadas.
+- Conjuração com consumo do espaço do círculo original; truques não gastam
+  espaços. Configuração inicial: 4/3/3/2 espaços do 1º ao 4º círculo.
+- Concentração: início, substituição, encerramento e salvaguarda automática
+  ao receber dano, considerando as condições aplicáveis.
+- Condições de D&D 5e (2014), exaustão de níveis 1 a 6 e benefícios como
+  Abençoado e Vínculo ativo, exibidos no topo.
+- Duração editável em rodadas ou sem prazo. **Avançar rodada** desconta uma
+  rodada completa de combate (6 segundos), avisa nas últimas duas e encerra
+  efeitos ao chegar a zero. Não é um relógio em tempo real.
+- Vínculo Encorajador começa com 100 rodadas; concentração usa a duração
+  reconhecida no catálogo. Durações desconhecidas ficam sem prazo.
+- Dados d4–d20; fórmulas de cura e dano, ataques, testes de atributo e salvaguardas.
+- As 18 perícias abaixo da rolagem de dados, com proficiência editável,
+  fórmula `D20 + bônus`, indicação de vantagem/desvantagem e dado clicável.
+  Os atributos permanecem no próprio painel.
+- Rolagens de d20 aplicam condições, bônus em dados, vantagens, desvantagens
+  e falhas automáticas. Situações que dependem da mesa aparecem como avisos,
+  incluindo alcance e limite de uso do Vínculo.
+- Percepção passiva calculada a partir do bônus da perícia.
+- **Inspiração Heroica (em desenvolvimento):** o código atual permite ganhar
+  ou remover inspiração e escolher gastá-la para obter vantagem numa jogada
+  compatível, incluindo concentração e testes contra a morte. Esta descrição
+  registra o comportamento presente na implementação em andamento.
+
+### Campanha e inventário
+
+- Inventário com categorias, quantidades, descrições, fórmula de dano e
+  marcação de equipado; usar um item desconta uma unidade.
+- Moedas de cobre, prata, electro, ouro e platina.
+- Notas com pastas, edição e salvamento automático; mover pelo seletor ou
+  arrastando o bloco para uma pasta ou para **Sem pasta**.
+- Modais no estilo da ficha para criar, renomear e confirmar exclusões nas notas.
+- Personagens da campanha (NPCs) com busca por nome, foto, anotações e afeto
+  de 0 a 3, com salvamento automático.
+- Foto do personagem principal e fotos de NPCs, com placeholders quando vazias.
+- Histórico persistido de atividades e rolagens; a tela mostra registros recentes.
+- **Desfazer** pelo botão ou `Ctrl+Z` fora dos campos de edição: mantém até 20
+  estados anteriores de vida, recursos, espaços, efeitos, proficiências,
+  inspiração, inventário e moedas. Notas, NPCs e fotos ficam fora desse recurso;
+  rolagens que não alteram o estado não criam ponto de desfazer.
+
+### Descansos
+
+- **Curto:** recupera Canalizar Divindade e limpa condições, efeitos e
+  concentração. Não recupera espaços. Dados de Vida são gastos pelo controle próprio.
+- **Longo:** restaura PV, recursos e espaços; recupera até metade do máximo
+  de Dados de Vida (mínimo de um), limpa PV temporários, testes contra a morte,
+  efeitos e concentração e desativa Defesa de Concha.
+
+Limpar todas as condições nos dois descansos é uma escolha desta ficha,
+conforme solicitado para o uso na campanha.
 
 ## Como executar
 
-### 1. Dependências
+### Windows
+
+Com Python instalado, dê dois cliques em **`run.bat`**. Na primeira execução,
+o script cria `.venv` e instala dependências; depois aplica as migrações e inicia
+o servidor em **http://127.0.0.1:8000/**. Encerre com `Ctrl+C` no terminal.
+
+Instalação ou atualização manual no PowerShell:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe manage.py migrate
+.\.venv\Scripts\python.exe manage.py runserver 127.0.0.1:8000
+```
+
+### Linux/macOS
+
+No Linux, execute `bash run.sh` para preparar o ambiente, instalar dependências
+na primeira execução, aplicar migrações e iniciar o servidor. A abertura automática
+do navegador depende de `xdg-open`; o endereço pode ser aberto manualmente.
+
+Execução manual em Linux/macOS:
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
-```
-
-### 2. Banco de dados PostgreSQL (padrão)
-
-Crie o banco e o usuário (ajuste a senha conforme desejar):
-
-```bash
-sudo -u postgres psql <<'SQL'
-CREATE USER botticellius WITH PASSWORD 'botticellius';
-CREATE DATABASE botticellius OWNER botticellius;
-SQL
-```
-
-Configure as variáveis de ambiente (veja `.env.example`):
-
-```bash
-export DB_NAME=botticellius DB_USER=botticellius DB_PASSWORD=botticellius \
-       DB_HOST=localhost DB_PORT=5432
-```
-
-> **Sem PostgreSQL à mão?** Para um teste rápido use SQLite:
-> `export USE_SQLITE=1` antes dos comandos abaixo.
-
-### 3. Migrar, criar usuário e rodar
-
-```bash
+python -m pip install -r requirements.txt
 python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
+python manage.py runserver 127.0.0.1:8000
 ```
 
-Acesse **http://127.0.0.1:8000/**, faça login e a ficha do Botticellius é criada
-automaticamente no primeiro acesso (atributos, espaços de magia e todas as
-magias já populados). Nenhum passo manual adicional é necessário.
+Não é necessário criar usuário para abrir a ficha. Para usar o admin, execute
+`python manage.py createsuperuser` no ambiente virtual.
 
-O admin do Django fica em **/admin/**.
+## Configuração e armazenamento
 
-## Notas técnicas
+O `settings.py` lê o `.env` na raiz sem sobrescrever variáveis já definidas
+no ambiente. O `.env.example` contém exemplos para serviços remotos; substitua
+os valores antes de usá-los.
 
-- Todas as ações persistem imediatamente e registram histórico.
-- O front-end usa **JavaScript puro + Fetch API**; o back-end responde JSON e o
-  dashboard é re-renderizado em tempo real sem recarregar a página.
-- A **CA efetiva** é uma propriedade calculada: `armor_class + 4` quando a
-  Defesa de Concha está ativa.
-- Regras de negócio ficam isoladas em `character/services.py`.
+- **SQLite é o padrão:** sem `USE_POSTGRES=1`, os dados ficam em `db.sqlite3`.
+  A variável antiga `USE_SQLITE` não seleciona o banco no código atual.
+- **PostgreSQL é opcional:** use `USE_POSTGRES=1` e configure `DB_NAME`,
+  `DB_USER`, `DB_PASSWORD`, `DB_HOST` e `DB_PORT`. `DB_SSLMODE` tem padrão
+  `require`; ajuste conforme a configuração do seu servidor.
+- **Fotos locais:** sem configuração de armazenamento remoto, ficam em `media/`.
+- **Supabase Storage opcional:** quando `SUPABASE_URL` e `SUPABASE_SECRET_KEY`
+  estão definidos, o backend `character.storage.SupabaseStorage` é usado para
+  uploads. `SUPABASE_BUCKET` tem padrão `avatars`; o backend gera URLs públicas
+  para exibir fotos. Banco e armazenamento de fotos são configurações separadas.
+- Outras opções: `DJANGO_SECRET_KEY`, `DJANGO_DEBUG` (padrão ligado),
+  `DJANGO_ALLOWED_HOSTS` e `DJANGO_TIME_ZONE` (padrão `America/Sao_Paulo`).
+
+O servidor de desenvolvimento e a ficha sem login destinam-se ao uso local.
+O login do admin não restringe o dashboard nem seus endpoints.
+
+Para preservar uma instalação local com SQLite, guarde `db.sqlite3` e `media/`
+com o servidor parado. Banco ou fotos remotos precisam ser preservados
+separadamente nos serviços configurados.
+
+## Estrutura
+
+```text
+botticellius_sheet/       Configurações e rotas do projeto
+character/
+  models.py              Ficha, magias, efeitos, histórico, notas, itens, NPCs e desfazer
+  services.py            Regras de negócio e serialização do estado
+  rolls.py               Regras de d20, atributos, perícias e condições
+  effects.py             Catálogo de condições e durações de concentração
+  undo.py                Captura e restauração de estados anteriores
+  views.py / urls.py     Dashboard e endpoints JSON
+  forms.py               Validação dos dados recebidos
+  seed_data.py           Valores e catálogo iniciais
+  storage.py             Backend opcional de fotos no Supabase Storage
+  admin.py               Administração dos modelos
+  management/commands/seed.py  Criação manual opcional de fichas
+  migrations/            Evolução do banco
+  templates/character/   Dashboard e componentes da interface
+  static/character/      CSS, imagens e JavaScript por funcionalidade
+  tests.py / test_*.py    Testes de serviços e endpoints
+run.bat / run.sh         Inicialização local
+```
+
+## Verificações
+
+Com o ambiente virtual ativo:
+
+```bash
+python manage.py check
+python manage.py test --noinput
+python manage.py makemigrations --check --dry-run
+```
+
+Para testar com SQLite independentemente do `.env`, defina `USE_POSTGRES=0`
+antes do comando: `$env:USE_POSTGRES='0'` no PowerShell ou
+`USE_POSTGRES=0 python manage.py test --noinput` em Linux/macOS.
+
+O comando opcional `python manage.py seed --user NOME` cria a ficha inicial
+para um usuário já existente. Isso não adiciona seleção de usuário ao dashboard.

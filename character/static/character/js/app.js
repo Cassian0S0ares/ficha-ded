@@ -81,6 +81,7 @@
         setText('hp-current', state.current_hp);
         setText('hp-max', state.max_hp);
         renderVitality(state);
+        renderInspiration(state);
         renderSkills(state);
 
         const fill = document.getElementById('hp-fill');
@@ -158,6 +159,29 @@
             row.querySelector('.skill-roll').setAttribute('aria-label', 'Rolar ' + skill.name + ', ' + (skill.formula || ('D20 ' + text)));
         });
         setText('passive-perception', state.passive_perception);
+    }
+
+    // Inspiração heroica: o jogador "arma" para gastar na próxima rolagem de d20.
+    let inspirationArmed = false;
+    const INSPIRATION_ACTIONS = ['roll-d20', 'death-save', 'damage'];
+
+    function renderInspiration(state) {
+        if (!('heroic_inspiration' in state)) return;
+        const box = document.getElementById('inspiration');
+        if (!box) return;
+        const has = !!state.heroic_inspiration;
+        if (!has) inspirationArmed = false;
+        box.dataset.has = has ? '1' : '0';
+        box.querySelector('.inspiration-gain').hidden = has;
+        box.querySelector('.inspiration-remove').hidden = !has;
+        const arm = document.getElementById('inspiration-arm');
+        arm.hidden = !has;
+        arm.classList.toggle('is-armed', inspirationArmed);
+        arm.setAttribute('aria-pressed', String(inspirationArmed));
+        setText('inspiration-arm-text', inspirationArmed
+            ? 'Vantagem na próxima rolagem · cancelar'
+            : 'Usar na próxima rolagem');
+        document.body.classList.toggle('inspiration-armed', inspirationArmed);
     }
 
     // PV temporários, Dados de Vida e testes contra a morte
@@ -239,6 +263,19 @@
         toast(message, !save.success);
     }
 
+    function confirmLongRest(trigger) {
+        const dialog = document.getElementById('long-rest-dialog');
+        if (!dialog || dialog.open) return Promise.resolve(false);
+        dialog.returnValue = '';
+        return new Promise(resolve => {
+            dialog.addEventListener('close', () => {
+                if (trigger.isConnected) trigger.focus();
+                resolve(dialog.returnValue === 'confirm');
+            }, {once: true});
+            dialog.showModal();
+        });
+    }
+
     // -------------------------------------------------------- Dispatcher
     async function handle(btn) {
         const action = btn.dataset.action;
@@ -268,6 +305,19 @@
                 }
                 break;
             }
+            case 'inspiration-arm': {
+                inspirationArmed = !inspirationArmed;
+                const box = document.getElementById('inspiration');
+                renderInspiration({ heroic_inspiration: box.dataset.has === '1' });
+                toast(inspirationArmed
+                    ? 'Inspiração pronta: a próxima rolagem de d20 terá vantagem.'
+                    : 'Inspiração guardada para depois.');
+                return;
+            }
+            case 'inspiration-set':
+                data.value = btn.dataset.value;
+                if (btn.dataset.value === '0') inspirationArmed = false;
+                break;
             case 'skill-prof':
                 data.skill = btn.dataset.skill;
                 url = URLS.skillProficiency;
@@ -298,7 +348,7 @@
                 data.label = btn.dataset.label || btn.dataset.formula;
                 break;
             case 'long-rest':
-                if (!confirm('Confirmar Descanso Longo? Isso restaura PV, recursos e espaços de magia.')) {
+                if (!await confirmLongRest(btn)) {
                     return;
                 }
                 break;
@@ -310,6 +360,8 @@
         if (action === 'roll-dice') url = ROLL_DICE_URL;
         if (action === 'roll-formula') url = ROLL_FORMULA_URL;
         if (action === 'roll-d20') url = ROLL_D20_URL;
+
+        if (inspirationArmed && INSPIRATION_ACTIONS.includes(action)) data.inspiration = '1';
 
         btn.disabled = true;
         try {
@@ -337,6 +389,8 @@
             'damage': 'Dano aplicado.',
             'temp-hp': 'PV temporários atualizados.',
             'skill-prof': 'Proficiência atualizada.',
+            'inspiration-set': payload.state && payload.state.heroic_inspiration
+                ? 'Ganhou inspiração heroica!' : 'Inspiração heroica removida.',
             'death-set': 'Testes contra a morte ajustados.',
             'revive': 'De volta à vida com 1 PV.',
             'heal': 'Cura aplicada.',

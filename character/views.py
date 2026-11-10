@@ -83,6 +83,11 @@ def upload_avatar(request):
 # ======================================================================
 # Helper genérico de ação AJAX
 # ======================================================================
+def _wants_inspiration(request):
+    """O jogador escolheu gastar a inspiração heroica nesta jogada?"""
+    return request.POST.get('inspiration') in ('1', 'true', 'on')
+
+
 def _json_action(request, fn, *, extra=None):
     """Executa uma ação de serviço e retorna o estado atualizado em JSON.
 
@@ -115,9 +120,10 @@ def take_damage(request):
         return JsonResponse({'ok': False, 'error': 'Quantidade inválida.'}, status=400)
     amount = form.cleaned_data['amount']
     critical = request.POST.get('critical') in ('1', 'true', 'on')
+    inspiration = _wants_inspiration(request)
 
     def action(c):
-        save = services.take_damage(c, amount, critical=critical)
+        save = services.take_damage(c, amount, critical=critical, inspiration=inspiration)
         return {'conc_save': save} if save else None
 
     return _json_action(request, action)
@@ -351,8 +357,10 @@ def roll_d20(request):
     if ability not in valid:
         return JsonResponse({'ok': False, 'error': 'Jogada inválida.'}, status=400)
 
+    inspiration = _wants_inspiration(request)
+
     def action(c):
-        return {'roll': services.roll_d20(c, kind, ability)}
+        return {'roll': services.roll_d20(c, kind, ability, inspiration=inspiration)}
 
     return _json_action(request, action)
 
@@ -541,7 +549,9 @@ def hit_die(request):
 
 @require_POST
 def death_save(request):
-    return _json_action(request, lambda c: {'roll': services.roll_death_save(c)})
+    inspiration = _wants_inspiration(request)
+    return _json_action(request, lambda c: {
+        'roll': services.roll_death_save(c, inspiration=inspiration)})
 
 
 @require_POST
@@ -566,3 +576,12 @@ def revive(request):
 def skill_proficiency(request):
     skill = request.POST.get('skill', '')
     return _json_action(request, lambda c: services.toggle_skill_proficiency(c, skill) and None)
+
+
+# ======================================================================
+# Inspiração heroica
+# ======================================================================
+@require_POST
+def inspiration(request):
+    value = request.POST.get('value') in ('1', 'true', 'on')
+    return _json_action(request, lambda c: services.set_inspiration(c, value) and None)

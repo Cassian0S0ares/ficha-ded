@@ -57,6 +57,7 @@ class Character(models.Model):
     current_hp = models.IntegerField('PV atual', default=59)
     armor_class = models.IntegerField('Classe de Armadura', default=19)
     temp_hp = models.PositiveIntegerField('PV temporários', default=0)
+    heroic_inspiration = models.BooleanField('Inspiração heroica', default=False)
 
     # Dados de Vida (Clérigo: d8, um por nível) e testes contra a morte
     hit_dice_current = models.PositiveIntegerField('Dados de Vida disponíveis', default=8)
