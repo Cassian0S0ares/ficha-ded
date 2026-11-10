@@ -67,10 +67,8 @@ class NoteForm(forms.Form):
 class D20Form(forms.Form):
     """Valida uma jogada de d20 (ataque, teste de atributo ou salvaguarda)."""
 
-    kind = forms.ChoiceField(choices=[(k, k) for k in ('attack', 'check', 'save')])
-    ability = forms.ChoiceField(choices=[
-        (k, k) for k in ('str', 'dex', 'con', 'int', 'wis', 'cha', 'spell', 'claws')
-    ])
+    kind = forms.ChoiceField(choices=[(k, k) for k in ('attack', 'check', 'save', 'skill')])
+    ability = forms.CharField(max_length=40)  # atributo, ataque ou perícia (validado no serviço)
 
 
 class ItemForm(forms.Form):

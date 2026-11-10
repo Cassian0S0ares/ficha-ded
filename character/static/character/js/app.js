@@ -81,6 +81,8 @@
         setText('hp-current', state.current_hp);
         setText('hp-max', state.max_hp);
         renderVitality(state);
+        renderSkills(state);
+
         const fill = document.getElementById('hp-fill');
         if (fill) fill.style.width = state.hp_percent + '%';
 
@@ -138,6 +140,24 @@
                 ).join('');
             }
         }
+    }
+
+    // Perícias: bônus e proficiência
+    function renderSkills(state) {
+        if (!state.skills) return;
+        state.skills.forEach((skill) => {
+            const row = document.querySelector('.skill[data-skill="' + skill.key + '"]');
+            if (!row) return;
+            const text = (skill.bonus >= 0 ? '+' : '') + skill.bonus;
+            row.classList.toggle('is-proficient', skill.proficient);
+            row.querySelector('.skill-bonus').textContent = skill.formula || ('D20 ' + text);
+            row.querySelector('.skill-bonus').title = (skill.warnings || []).join(' ');
+            const prof = row.querySelector('.skill-prof');
+            prof.setAttribute('aria-pressed', String(skill.proficient));
+            prof.title = skill.proficient ? 'Proficiente. Clique para remover' : 'Clique para marcar proficiência';
+            row.querySelector('.skill-roll').setAttribute('aria-label', 'Rolar ' + skill.name + ', ' + (skill.formula || ('D20 ' + text)));
+        });
+        setText('passive-perception', state.passive_perception);
     }
 
     // PV temporários, Dados de Vida e testes contra a morte
@@ -248,6 +268,10 @@
                 }
                 break;
             }
+            case 'skill-prof':
+                data.skill = btn.dataset.skill;
+                url = URLS.skillProficiency;
+                break;
             case 'temp-hp':
                 data.amount = parseInt(document.getElementById('temp-amount').value, 10) || 0;
                 break;
@@ -312,6 +336,7 @@
         const messages = {
             'damage': 'Dano aplicado.',
             'temp-hp': 'PV temporários atualizados.',
+            'skill-prof': 'Proficiência atualizada.',
             'death-set': 'Testes contra a morte ajustados.',
             'revive': 'De volta à vida com 1 PV.',
             'heal': 'Cura aplicada.',

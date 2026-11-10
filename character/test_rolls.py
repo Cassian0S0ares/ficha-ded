@@ -88,3 +88,49 @@ class RollD20Tests(TestCase):
         self.assertIn('Ataques: vantagem (Invisível)', data['state']['roll_effects'])
         bad = self.client.post('/api/roll-d20/', {'kind': 'attack', 'ability': 'wis'})
         self.assertEqual(bad.status_code, 400)
+
+
+class SkillTests(TestCase):
+    def setUp(self):
+        self.character = services.get_sheet()
+
+    def test_skill_formulas_follow_effects_and_render_under_dice(self):
+        skills = services.serialize_skills(self.character)
+        self.assertEqual(len(skills), 18)
+        self.assertEqual(next(s for s in skills if s['key'] == 'medicine')['formula'], 'D20 + 8')
+        services.change_effect(self.character, 'poisoned', toggle=True)
+        services.change_effect(self.character, 'bond', toggle=True)
+        formula = services.serialize_skills(self.character)[0]['formula']
+        self.assertIn('+ 1D4', formula)
+        self.assertIn('Desvantagem', formula)
+        page = self.client.get('/').content.decode()
+        self.assertLess(page.index('card-abilities'), page.index('card-slots'))
+        self.assertLess(page.index('card-dice'), page.index('dice-skills'))
+        self.assertEqual(page.count('data-kind="skill"'), 18)
+
+    def test_default_proficiencies_from_sheet(self):
+        bonus = {s['key']: s['bonus'] for s in services.serialize_skills(self.character)}
+        self.assertEqual(bonus['survival'], 8)     # SAB +5, proficiente +3
+        self.assertEqual(bonus['medicine'], 8)
+        self.assertEqual(bonus['religion'], 3)     # INT +0 +3
+        self.assertEqual(bonus['persuasion'], 4)   # CAR +1 +3
+        self.assertEqual(bonus['perception'], 5)   # sem proficiência
+        self.assertEqual(bonus['stealth'], -1)
+        state = services.serialize_state(self.character)
+        self.assertEqual(state['passive_perception'], 15)
+
+    def test_skill_roll_uses_bonus_and_conditions(self):
+        services.change_effect(self.character, 'poisoned', toggle=True)
+        with mock.patch.object(services, '_roll_die', side_effect=[14, 6]):
+            roll = services.roll_d20(self.character, 'skill', 'medicine')
+        self.assertEqual((roll['label'], roll['mode'], roll['total']), ('Medicina', 'disadvantage', 14))
+
+    def test_toggle_proficiency_endpoint_and_bad_skill(self):
+        data = self.client.post('/api/skill-proficiency/', {'skill': 'insight'}).json()
+        insight = next(s for s in data['state']['skills'] if s['key'] == 'insight')
+        self.assertEqual((insight['proficient'], insight['bonus']), (True, 8))
+        self.client.post('/api/skill-proficiency/', {'skill': 'insight'})
+        self.character.refresh_from_db()
+        self.assertNotIn('insight', self.character.skill_proficiencies)
+        bad = self.client.post('/api/roll-d20/', {'kind': 'skill', 'ability': 'wis'})
+        self.assertEqual(bad.status_code, 400)

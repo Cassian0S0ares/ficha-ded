@@ -21,6 +21,28 @@ ABILITIES = {
 # Clérigo: proficiência em salvaguardas de Sabedoria e Carisma.
 SAVE_PROFICIENCIES = {'wis', 'cha'}
 
+# Perícias de D&D 5e: chave -> (nome, atributo).
+SKILLS = {
+    'athletics': ('Atletismo', 'str'),
+    'acrobatics': ('Acrobacia', 'dex'),
+    'sleight_of_hand': ('Prestidigitação', 'dex'),
+    'stealth': ('Furtividade', 'dex'),
+    'arcana': ('Arcanismo', 'int'),
+    'history': ('História', 'int'),
+    'investigation': ('Investigação', 'int'),
+    'nature': ('Natureza', 'int'),
+    'religion': ('Religião', 'int'),
+    'animal_handling': ('Adestrar Animais', 'wis'),
+    'insight': ('Intuição', 'wis'),
+    'medicine': ('Medicina', 'wis'),
+    'perception': ('Percepção', 'wis'),
+    'survival': ('Sobrevivência', 'wis'),
+    'deception': ('Enganação', 'cha'),
+    'intimidation': ('Intimidação', 'cha'),
+    'performance': ('Atuação', 'cha'),
+    'persuasion': ('Persuasão', 'cha'),
+}
+
 AUTO_FAIL_STR_DEX = ('paralyzed', 'petrified', 'stunned', 'unconscious')
 
 

@@ -146,10 +146,13 @@
     </section>
 
     <!-- ===================== ATRIBUTOS ===================== -->
+
+
+    <!-- ===================== ESPAÇOS DE MAGIA ===================== -->
     <section class="card card-abilities">
         <h2 class="card-title">Atributos</h2>
         <div class="abilities">
-            {% for key, label, score, modifier in abilities %}
+            {% for key, label, score, modifier, ability_skills in abilities %}
             <div class="ability">
                 <button type="button" class="ability-roll" data-action="roll-d20" data-kind="check" data-ability="{{ key }}" title="Rolar teste de {{ label }} (d20 {{ modifier }})" aria-label="Rolar teste de {{ label }}, d20 {{ modifier }}">
                     <span class="ability-name">{{ label }}</span>
@@ -157,6 +160,7 @@
                     <span class="ability-score">{{ score }}</span>
                 </button>
                 <button type="button" class="btn btn-xs ability-save" data-action="roll-d20" data-kind="save" data-ability="{{ key }}" aria-label="Salvaguarda de {{ label }}">Salv.</button>
+
             </div>
             {% endfor %}
         </div>
@@ -165,10 +169,10 @@
             <span>Ataque Mágico <strong>+{{ character.spell_attack_bonus }}</strong></span>
             <span>Proficiência <strong>+{{ character.proficiency_bonus }}</strong></span>
             <span>Deslocamento <strong>{{ character.speed }}m</strong></span>
+            <span>Percepção passiva <strong id="passive-perception">{{ state.passive_perception }}</strong></span>
         </div>
     </section>
 
-    <!-- ===================== ESPAÇOS DE MAGIA ===================== -->
     <section class="card card-slots">
         <h2 class="card-title">Espaços de Magia</h2>
         <div id="slots" class="slots">
@@ -402,6 +406,8 @@
             <li><span class="dh-dice">{{ roll.dice }}</span> <span class="dh-result">{{ roll.result }}</span> <span class="dh-when">{{ roll.created_at|date:"H:i" }}</span></li>
             {% endfor %}
         </ul>
+
+        {% include 'character/_skills.html' %}
     </section>
 
     {% include 'character/_inventory.html' %}
@@ -432,6 +438,7 @@
         rollFormula: "{% url 'roll_formula' %}",
         rollD20: "{% url 'roll_d20' %}",
         deathSet: "{% url 'death_set' %}",
+        skillProficiency: "{% url 'skill_proficiency' %}",
         inventory: "{% url 'inventory' %}",
         npcs: "{% url 'npcs' %}",
         state: "{% url 'state' %}",

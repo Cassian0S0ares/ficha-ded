@@ -33,8 +33,12 @@ def dashboard(request):
         m = character.ability_modifier(score)
         return f'+{m}' if m >= 0 else str(m)
 
+    skills = services.serialize_skills(character)
+    for skill in skills:
+        skill['bonus_text'] = f'+{skill["bonus"]}' if skill['bonus'] >= 0 else str(skill['bonus'])
     abilities = [
-        (key, label, getattr(character, field), mod(getattr(character, field)))
+        (key, label, getattr(character, field), mod(getattr(character, field)),
+         [s for s in skills if s['ability'] == key])
         for key, (field, _, label) in rolls.ABILITIES.items()
     ]
 
@@ -340,7 +344,11 @@ def roll_d20(request):
     if not form.is_valid():
         return JsonResponse({'ok': False, 'error': 'Jogada inválida.'}, status=400)
     kind, ability = form.cleaned_data['kind'], form.cleaned_data['ability']
-    if (kind == 'attack') != (ability in services.D20_ATTACKS):
+    valid = {
+        'attack': services.D20_ATTACKS, 'check': rolls.ABILITIES,
+        'save': rolls.ABILITIES, 'skill': rolls.SKILLS,
+    }[kind]
+    if ability not in valid:
         return JsonResponse({'ok': False, 'error': 'Jogada inválida.'}, status=400)
 
     def action(c):
@@ -549,3 +557,12 @@ def death_set(request):
 @require_POST
 def revive(request):
     return _json_action(request, lambda c: services.revive(c) and None)
+
+
+# ======================================================================
+# Perícias
+# ======================================================================
+@require_POST
+def skill_proficiency(request):
+    skill = request.POST.get('skill', '')
+    return _json_action(request, lambda c: services.toggle_skill_proficiency(c, skill) and None)

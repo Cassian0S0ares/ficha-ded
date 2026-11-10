@@ -17,7 +17,7 @@ MAX_SNAPSHOTS = 20
 
 CHARACTER_FIELDS = (
     'current_hp', 'max_hp', 'temp_hp', 'armor_class', 'concentration_spell', 'shell_defense_active',
-    'hit_dice_current', 'death_successes', 'death_failures',
+    'hit_dice_current', 'death_successes', 'death_failures', 'skill_proficiencies',
     'channel_divinity_current', 'emboldening_bond_current',
     'copper', 'silver', 'electrum', 'gold', 'platinum',
 )

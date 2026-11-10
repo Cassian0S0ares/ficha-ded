@@ -1,0 +1,19 @@
+<section class="dice-skills" aria-labelledby="skills-title">
+    <h3 class="spell-group-title" id="skills-title">Perícias</h3>
+    <p class="skills-help">Clique no dado para rolar. O círculo marca proficiência.</p>
+    <ul class="skill-list">
+        {% for skill in state.skills %}
+        <li class="skill{% if skill.proficient %} is-proficient{% endif %}" data-skill="{{ skill.key }}">
+            <button type="button" class="skill-prof" data-action="skill-prof" data-skill="{{ skill.key }}"
+                    aria-pressed="{{ skill.proficient|yesno:'true,false' }}" aria-label="Proficiência em {{ skill.name }}"
+                    title="Marcar ou remover proficiência"></button>
+            <span class="skill-name">{{ skill.name }}</span>
+            <span class="skill-bonus">{{ skill.formula }}</span>
+            <button type="button" class="skill-roll" data-action="roll-d20" data-kind="skill" data-ability="{{ skill.key }}"
+                    title="Rolar {{ skill.name }}" aria-label="Rolar {{ skill.name }}, {{ skill.formula }}">
+                {% include 'character/_die.html' with die='d20' %}
+            </button>
+        </li>
+        {% endfor %}
+    </ul>
+</section>

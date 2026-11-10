@@ -39,6 +39,7 @@ urlpatterns = [
     path('api/roll-dice/', views.roll_dice, name='roll_dice'),
     path('api/roll-formula/', views.roll_formula, name='roll_formula'),
     path('api/roll-d20/', views.roll_d20, name='roll_d20'),
+    path('api/skill-proficiency/', views.skill_proficiency, name='skill_proficiency'),
 
     # Descansos
     path('api/short-rest/', views.short_rest, name='short_rest'),

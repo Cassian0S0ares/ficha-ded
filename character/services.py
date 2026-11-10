@@ -172,6 +172,53 @@ def roll_formula(character, formula, label=''):
     return total, detail
 
 
+def skill_bonus(character, skill):
+    """Modificador do atributo + proficiência, se proficiente."""
+    _, ability = rolls.SKILLS[skill]
+    field = rolls.ABILITIES[ability][0]
+    bonus = character.ability_modifier(getattr(character, field))
+    if skill in (character.skill_proficiencies or []):
+        bonus += character.proficiency_bonus
+    return bonus
+
+
+def serialize_skills(character):
+    """Perícias com bônus e proficiência, na ordem da ficha."""
+    proficient = set(character.skill_proficiencies or [])
+    skills = [
+        {'key': key, 'name': name, 'ability': ability,
+         'bonus': skill_bonus(character, key), 'proficient': key in proficient}
+        for key, (name, ability) in rolls.SKILLS.items()
+    ]
+    effects = effects_map(character)
+    for skill in skills:
+        ctx = rolls.d20_context(effects, 'check', skill['ability'])
+        mode = rolls.roll_mode(ctx)
+        bonus = skill['bonus']
+        formula = f'D20 {"+" if bonus >= 0 else "−"} {abs(bonus)}'
+        formula += ''.join(' + ' + dice.upper() for dice, _ in ctx['bonus'])
+        if mode != 'normal':
+            formula += ' · ' + ('Vantagem' if mode == 'advantage' else 'Desvantagem')
+        skill.update(formula=formula, warnings=ctx['warnings'])
+    return skills
+
+
+def toggle_skill_proficiency(character, skill):
+    if skill not in rolls.SKILLS:
+        raise ValueError('Perícia desconhecida.')
+    skills = list(character.skill_proficiencies or [])
+    name = rolls.SKILLS[skill][0]
+    if skill in skills:
+        skills.remove(skill)
+        log(character, f'Proficiência removida: {name}.')
+    else:
+        skills.append(skill)
+        log(character, f'Proficiência adicionada: {name}.')
+    character.skill_proficiencies = skills
+    character.save(update_fields=['skill_proficiencies', 'updated_at'])
+    return character
+
+
 def effects_map(character):
     """Condições ativas como {chave: nível} (nível só vale para exaustão)."""
     return {e.key: e.exhaustion_level for e in character.active_effects.all()}
@@ -187,7 +234,8 @@ def roll_d20(character, kind, ability=None, *, label='', dc=None):
     """Rola d20 de ataque, teste ou salvaguarda aplicando as condições ativas.
 
     kind: 'attack' (ability = 'spell' ou 'claws'), 'check' ou 'save'
-    (ability = chave de rolls.ABILITIES). Vantagem e desvantagem vêm das
+    (ability = chave de rolls.ABILITIES) ou 'skill' (ability = chave de
+    rolls.SKILLS; é um teste de atributo). Vantagem e desvantagem vêm das
     condições (ver character.rolls); bônus como +1d4 de Abençoar e do
     Vínculo são somados. Levanta SpellCastError se a condição impede a jogada.
     """
@@ -207,10 +255,18 @@ def roll_d20(character, kind, ability=None, *, label='', dc=None):
         if kind == 'save' and ability in rolls.SAVE_PROFICIENCIES:
             modifier += character.proficiency_bonus
         label = label or (('Teste de ' if kind == 'check' else 'Salv. ') + short)
+    elif kind == 'skill':
+        if ability not in rolls.SKILLS:
+            raise ValueError('Perícia desconhecida.')
+        modifier = skill_bonus(character, ability)
+        label = label or rolls.SKILLS[ability][0]
     else:
         raise ValueError('Tipo de jogada desconhecido.')
 
-    ctx = rolls.d20_context(effects_map(character), kind, ability,
+    # Perícia é um teste do atributo dela (mesmas condições).
+    rule_kind, rule_ability = (('check', rolls.SKILLS[ability][1]) if kind == 'skill'
+                               else (kind, ability))
+    ctx = rolls.d20_context(effects_map(character), rule_kind, rule_ability,
                             shell_defense=character.shell_defense_active)
     if ctx['blocked']:
         raise SpellCastError(ctx['blocked'])
@@ -724,6 +780,8 @@ def serialize_state(character):
         'max_hp': character.max_hp,
         'hp_percent': character.hp_percent,
         'temp_hp': character.temp_hp,
+        'skills': serialize_skills(character),
+        'passive_perception': 10 + skill_bonus(character, 'perception'),
         'hit_die': character.hit_die,
         'hit_dice_current': character.hit_dice_current,
         'hit_dice_max': character.hit_dice_max,

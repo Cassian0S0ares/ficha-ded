@@ -766,3 +766,35 @@ a { color: var(--gold-light); }
 .death-status { margin: 6px 0 8px; font-size: .9rem; font-style: italic; }
 .death-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .death-actions [hidden] { display: none; }
+
+/* ------------------------------------------------------------ Perícias --- */
+.skill-list {
+    list-style: none; margin: 8px 0 0; padding: 8px 0 0; width: 100%;
+    border-top: 1px dashed rgba(166, 118, 63, .4); text-align: left;
+}
+.skill { display: flex; align-items: center; gap: 6px; }
+.skill-prof {
+    width: 12px; height: 12px; flex-shrink: 0; padding: 0; cursor: pointer; border-radius: 50%;
+    border: 1.5px solid var(--gold); background: transparent;
+}
+.skill.is-proficient .skill-prof { background: var(--leather); border-color: var(--leather); }
+.skill-roll {
+    flex: 1; min-width: 0; display: flex; justify-content: space-between; align-items: baseline; gap: 6px;
+    background: none; border: 0; border-radius: 6px; padding: 2px 4px; cursor: pointer;
+    font: inherit; font-size: .86rem; color: var(--ink); text-align: left;
+}
+.skill-roll:hover { background: rgba(166, 118, 63, .14); }
+.skill-roll:active { transform: translateY(1px); }
+.skill-roll:disabled { opacity: .5; cursor: wait; }
+.skill-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.skill.is-proficient .skill-name { font-weight: 600; }
+.skill-bonus { font-family: var(--font-display); font-weight: 700; color: var(--leather-dark); flex-shrink: 0; }
+.skill-prof:focus-visible, .skill-roll:focus-visible { outline: 3px solid var(--gold-light); outline-offset: 1px; }
+.card-dice { min-width: 0; align-self: start; overflow: visible; }
+.dice-skills { margin-top: 24px; }
+.skills-help { font-size: .85rem; color: var(--ink-soft); }
+.dice-skills .skill { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto 34px; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px solid rgba(166, 118, 63, .18); }
+.dice-skills .skill-name { white-space: normal; overflow: visible; overflow-wrap: anywhere; font-size: .95rem; }
+.dice-skills .skill-bonus { font-size: .8rem; max-width: 14ch; white-space: normal; }
+.dice-skills .skill-roll { display: flex; align-items: center; justify-content: center; min-height: 34px; padding: 4px; color: var(--leather); }
+.dice-skills .die-icon { width: 25px; height: 25px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }

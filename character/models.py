@@ -19,6 +19,11 @@ from django.conf import settings
 from django.db import models
 
 
+def default_skill_proficiencies():
+    """Sobrevivência (Tortle), Persuasão (Implemento da Paz), Medicina e Religião (Eremita)."""
+    return ['survival', 'persuasion', 'medicine', 'religion']
+
+
 class Character(models.Model):
     """Ficha completa de um personagem de D&D 5e."""
 
@@ -63,6 +68,10 @@ class Character(models.Model):
     spell_attack_bonus = models.IntegerField('Bônus de ataque mágico', default=8)
     speed = models.IntegerField('Deslocamento (m)', default=9)
     proficiency_bonus = models.IntegerField('Bônus de proficiência', default=3)
+
+    skill_proficiencies = models.JSONField(
+        'Perícias proficientes', default=default_skill_proficiencies, blank=True
+    )
 
     # Limite de preparação de magias (Peace Domain Cleric nível 8)
     prepared_spells_limit = models.IntegerField('Limite de magias preparadas', default=13)
